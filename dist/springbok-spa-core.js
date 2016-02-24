@@ -6,10 +6,6 @@
     core.run(['endpoints', function (endpoints) {
         endpoints.add('enums', 'public/constants');
     }]);
-
-    core.run(['enums', function (enums) {
-        enums.load();
-    }]);
 })();
 (function () {
     'use strict';
