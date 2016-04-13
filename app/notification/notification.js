@@ -13,9 +13,18 @@
         };
         
         /**
-         * Displays a notification and makes it fade after a specifific delay.
+         * Sets the default delay, in milliseconds, before the notification fades out.
+         * @param {integer} delay the delay in milliseconds before the notification fades, 5000 milliseconds by default 
+         * @returns {undefined}
+         */
+        notification.setDefaultDelay = function(delay) {
+            DEFAULTS.delay = delay || DEFAULTS.delay;
+        };
+        
+        /**
+         * Displays a notification and makes it fade out after a specifific delay.
          * @param {Object} notification the a notification object {type: 'info', message: 'MY_KEY', show: true}
-         * @param {int} delay the delay before the notification fades, 5000 milliseconds by default 
+         * @param {integer} delay the delay in milliseconds before the notification fades out, 5000 milliseconds by default 
          */
         notification.display = function(notification, delay) {
             delay = delay || DEFAULTS.delay;

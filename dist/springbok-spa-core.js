@@ -10,6 +10,182 @@
 (function () {
     'use strict';
 
+    angular.module('springbok.core').service('notification', notification);
+
+    notification.$inject = ['$timeout'];
+
+    function notification($timeout) {
+        var notification = this;
+        var DEFAULTS = {
+            delay: 5000,
+            type: 'info'
+        };
+
+        /**
+         * Sets the default delay, in milliseconds, before the notification fades out.
+         * @param {integer} delay the delay in milliseconds before the notification fades, 5000 milliseconds by default 
+         * @returns {undefined}
+         */
+        notification.setDefaultDelay = function (delay) {
+            DEFAULTS.delay = delay || DEFAULTS.delay;
+        };
+
+        /**
+         * Displays a notification and makes it fade out after a specifific delay.
+         * @param {Object} notification the a notification object {type: 'info', message: 'MY_KEY', show: true}
+         * @param {integer} delay the delay in milliseconds before the notification fades out, 5000 milliseconds by default 
+         */
+        notification.display = function (notification, delay) {
+            delay = delay || DEFAULTS.delay;
+
+            notification.show = true;
+
+            if (!_.isNull(notification) && !_.isUndefined(notification)) {
+                $timeout(function () {
+                    notification.show = false;
+                }, delay);
+            }
+        };
+
+        /**
+         * Creates a notification from a message key and a type, info type by default.
+         * @param {string} type the type of alert (info|success|warning|error)
+         * @param {string} message the message key 
+         * @returns a notification object {type: 'info', message: 'MY_KEY', show: true}
+         */
+        notification.create = function (type, message) {
+            type = type || DEFAULTS.type;
+
+            return {
+                show: false,
+                type: type,
+                message: message
+            };
+        };
+    }
+})();
+(function () {
+    'use strict';
+
+    angular.module('springbok.core').directive('sbNotification', ioNotification);
+
+    var TEMPLATE = '<div ng-show="show" class="alert fixed-notification {{typeClass}}" style="z-index: 2000; position: fixed; width: 25%; top: 5%; right: 0.5%;">' + '<p style="float: left; width: 95%;">' + '{{message | translate}}' + '</p>' + '<button type="button" class="close" ng-click="close()" width: 5%;>' + '<i class="fa fa-times"></i>' + '</button>' + '</div>';
+
+    function ioNotification() {
+        return {
+            restrict: 'E',
+            template: TEMPLATE,
+            transclude: true,
+            replace: true,
+            scope: {
+                type: '=',
+                message: '=',
+                show: '='
+            },
+            link: function (scope) {
+                scope.close = function () {
+                    scope.show = false;
+                };
+
+                switch (scope.type) {
+                    case 'info':
+                        scope.typeClass = 'alert-info';
+                        break;
+                    case 'success':
+                        scope.typeClass = 'alert-success';
+                        break;
+                    case 'warning':
+                        scope.typeClass = 'alert-warning';
+                        break;
+                    case 'error':
+                        scope.typeClass = 'alert-danger';
+                        break;
+                    default:
+                        scope.typeClass = 'alert-info';
+                }
+            }
+        };
+    }
+})();
+(function () {
+    'use strict';
+
+    angular.module('springbok.core').factory('Search', Search);
+
+    function Search() {}
+})();
+(function () {
+    'use strict';
+
+    angular.module('springbok.core').service('pagination', pagination);
+
+    function pagination() {
+        return {
+            extendsPagedDataWithWalker: function (pagedData) {
+                if (pagedData.number === 0) {
+                    pagedData.currentPageFrom = 1;
+                    pagedData.currentPageTo = pagedData.numberOfElements < pagedData.size ? pagedData.numberOfElements : pagedData.size;
+                } else {
+                    pagedData.currentPageFrom = pagedData.number * pagedData.size + 1;
+                    pagedData.currentPageTo = pagedData.numberOfElements < pagedData.size ? pagedData.totalElements : pagedData.currentPageFrom - 1 + pagedData.size;
+                }
+            }
+        };
+    }
+})();
+(function () {
+    'use strict';
+
+    angular.module('springbok.core').service('searchCriterias', searchCriterias);
+
+    function searchCriterias() {
+        var searchCriterias = {};
+
+        /**
+         * Return all criterias for all search
+         * @returns {{}}
+         */
+        this.getSearchCriterias = function () {
+            return searchCriterias;
+        };
+        /**
+         * Return an object "criterias" for a specific search
+         * @param search
+         */
+        this.getCriteriasForSearch = function (search) {
+            return searchCriterias[search];
+        };
+        /**
+         * Add an object wich is criterias for a specific search
+         * For example : search = 'task' - criterias = {owner: 'admin', status: 'new'}
+         * @param search
+         * @param criterias
+         */
+        this.addCriteriasForSearch = function (search, criterias) {
+            if (search !== undefined && criterias !== undefined) {
+                searchCriterias[search] = criterias;
+            }
+        };
+        /**
+         * Remove all search criterias
+         */
+        this.resetAllSearchCriterias = function () {
+            searchCriterias = {};
+        };
+        /**
+         * Delete all the criterias for a specific search
+         * @param search
+         */
+        this.removeCriteriaForSearch = function (search) {
+            if (searchCriterias[search] !== undefined) {
+                searchCriterias[search] = undefined;
+            }
+        };
+    }
+})();
+(function () {
+    'use strict';
+
     angular.module('springbok.core').service('encryptionUtils', encryptionUtils);
 
     function encryptionUtils() {
@@ -117,99 +293,6 @@
 (function () {
     'use strict';
 
-    angular.module('springbok.core').service('notification', notification);
-
-    notification.$inject = ['$timeout'];
-
-    function notification($timeout) {
-        var notification = this;
-        var DEFAULTS = {
-            delay: 5000,
-            type: 'info'
-        };
-
-        /**
-         * Displays a notification and makes it fade after a specifific delay.
-         * @param {Object} notification the a notification object {type: 'info', message: 'MY_KEY', show: true}
-         * @param {int} delay the delay before the notification fades, 5000 milliseconds by default 
-         */
-        notification.display = function (notification, delay) {
-            delay = delay || DEFAULTS.delay;
-
-            notification.show = true;
-
-            if (!_.isNull(notification) && !_.isUndefined(notification)) {
-                $timeout(function () {
-                    notification.show = false;
-                }, delay);
-            }
-        };
-
-        /**
-         * Creates a notification from a message key and a type, info type by default.
-         * @param {string} type the type of alert (info|success|warning|error)
-         * @param {string} message the message key 
-         * @returns a notification object {type: 'info', message: 'MY_KEY', show: true}
-         */
-        notification.create = function (type, message) {
-            type = type || DEFAULTS.type;
-
-            return {
-                show: false,
-                type: type,
-                message: message
-            };
-        };
-    }
-})();
-(function () {
-    'use strict';
-
-    angular.module('springbok.core').directive('sbNotification', ioNotification);
-
-    var TEMPLATE = '<div ng-show="show" class="alert fixed-notification {{typeClass}}" style="z-index: 2000; position: fixed; width: 25%; top: 5%; right: 0.5%;">' + '<p style="float: left; width: 95%;">' + '{{message | translate}}' + '</p>' + '<button type="button" class="close" ng-click="close()" width: 5%;>' + '<i class="fa fa-times"></i>' + '</button>' + '</div>';
-
-    function ioNotification() {
-        return {
-            restrict: 'E',
-            template: TEMPLATE,
-            transclude: true,
-            replace: true,
-            scope: {
-                type: '=',
-                message: '=',
-                show: '='
-            },
-            link: function (scope) {
-                scope.show = true;
-
-                scope.close = function () {
-                    scope.show = false;
-                };
-
-                switch (scope.type) {
-                    case 'info':
-                        scope.typeClass = 'alert-info';
-                        break;
-                    case 'success':
-                        scope.typeClass = 'alert-success';
-                        break;
-                    case 'warning':
-                        scope.typeClass = 'alert-warning';
-                        break;
-                    case 'error':
-                        scope.typeClass = 'alert-danger';
-                        break;
-                    default:
-                        scope.typeClass = 'alert-info';
-                }
-            }
-        };
-    }
-})();
-(function () {
-    'use strict';
-
     angular.module('springbok.core').service('endpoints', endpoints);
 
     endpoints.$inject = ['$log', 'urlUtils'];
@@ -271,82 +354,6 @@
          */
         this.processParameters = function (route, parameters) {
             return urlUtils.processUrlWithPathVariables(route, parameters, ':');
-        };
-    }
-})();
-(function () {
-    'use strict';
-
-    angular.module('springbok.core').factory('Search', Search);
-
-    function Search() {}
-})();
-(function () {
-    'use strict';
-
-    angular.module('springbok.core').service('pagination', pagination);
-
-    function pagination() {
-        return {
-            extendsPagedDataWithWalker: function (pagedData) {
-                if (pagedData.number === 0) {
-                    pagedData.currentPageFrom = 1;
-                    pagedData.currentPageTo = pagedData.numberOfElements < pagedData.size ? pagedData.numberOfElements : pagedData.size;
-                } else {
-                    pagedData.currentPageFrom = pagedData.number * pagedData.size + 1;
-                    pagedData.currentPageTo = pagedData.numberOfElements < pagedData.size ? pagedData.totalElements : pagedData.currentPageFrom - 1 + pagedData.size;
-                }
-            }
-        };
-    }
-})();
-(function () {
-    'use strict';
-
-    angular.module('springbok.core').service('searchCriterias', searchCriterias);
-
-    function searchCriterias() {
-        var searchCriterias = {};
-
-        /**
-         * Return all criterias for all search
-         * @returns {{}}
-         */
-        this.getSearchCriterias = function () {
-            return searchCriterias;
-        };
-        /**
-         * Return an object "criterias" for a specific search
-         * @param search
-         */
-        this.getCriteriasForSearch = function (search) {
-            return searchCriterias[search];
-        };
-        /**
-         * Add an object wich is criterias for a specific search
-         * For example : search = 'task' - criterias = {owner: 'admin', status: 'new'}
-         * @param search
-         * @param criterias
-         */
-        this.addCriteriasForSearch = function (search, criterias) {
-            if (search !== undefined && criterias !== undefined) {
-                searchCriterias[search] = criterias;
-            }
-        };
-        /**
-         * Remove all search criterias
-         */
-        this.resetAllSearchCriterias = function () {
-            searchCriterias = {};
-        };
-        /**
-         * Delete all the criterias for a specific search
-         * @param search
-         */
-        this.removeCriteriaForSearch = function (search) {
-            if (searchCriterias[search] !== undefined) {
-                searchCriterias[search] = undefined;
-            }
         };
     }
 })();

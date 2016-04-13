@@ -24,8 +24,6 @@
                 show: '='
             },
             link: function (scope) {
-                scope.show = true;
-                
                 scope.close = function() {
                     scope.show = false;
                 };
