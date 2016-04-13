@@ -19,26 +19,30 @@
             transclude: true,
             replace: true,
             scope: {
-                type: '=',
+                type: '@',
                 message: '=',
                 show: '='
             },
-            link: function (scope) {
+            link: function (scope, element, attributes) {
                 scope.close = function() {
                     scope.show = false;
                 };
                 
-                switch(scope.type) {
-                case 'info' : scope.typeClass = 'alert-info';
-                    break;
-                case 'success' : scope.typeClass = 'alert-success';
-                    break;
-                case 'warning' : scope.typeClass = 'alert-warning';
-                    break;
-                case 'error' : scope.typeClass = 'alert-danger';
-                    break;
-                default : scope.typeClass = 'alert-info';
-                }
+                attributes.$observe('type', function(value) {
+                    switch(value) {
+                    case 'info' : scope.typeClass = 'alert-info';
+                        break;
+                    case 'success' : scope.typeClass = 'alert-success';
+                        break;
+                    case 'warning' : scope.typeClass = 'alert-warning';
+                        break;
+                    case 'error' : scope.typeClass = 'alert-danger';
+                        break;
+                    default : scope.typeClass = 'alert-info';
+                        break;
+                    }
+                });
+
             }
         };
     }
