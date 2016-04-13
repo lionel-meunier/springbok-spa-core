@@ -10,6 +10,55 @@
 (function () {
     'use strict';
 
+    angular.module('springbok.core').service('encryptionUtils', encryptionUtils);
+
+    function encryptionUtils() {
+        this.encodeToBase64 = function (stringToEncode) {
+            return window.btoa(unescape(encodeURIComponent(stringToEncode)));
+        };
+    }
+})();
+(function () {
+    'use strict';
+
+    angular.module('springbok.core').service('urlUtils', urlUtils);
+
+    function urlUtils() {
+        this.addSlashAtTheEndIfNotPresent = function (url) {
+            if (!s.isBlank(url)) {
+                var lastIndexOfSlash = url.lastIndexOf('/');
+                var lastCharacterIsASlash = lastIndexOfSlash === url.length - 1;
+
+                if (!lastCharacterIsASlash) {
+                    url += '/';
+                }
+            }
+
+            return url;
+        };
+
+        this.processUrlWithPathVariables = function (url, pathVariables, pathVariableCharacter) {
+            var processedUrl = url,
+                paramMatch;
+
+            if (_.isUndefined(pathVariables) || !_.isObject(pathVariables)) {
+                return processedUrl;
+            }
+
+            _.each(_.keys(pathVariables), function (key) {
+                paramMatch = pathVariableCharacter + key;
+                if (s.include(url, paramMatch)) {
+                    processedUrl = processedUrl.replace(paramMatch, pathVariables[key]);
+                }
+            });
+
+            return processedUrl;
+        };
+    }
+})();
+(function () {
+    'use strict';
+
     angular.module('springbok.core').service('enums', enums);
 
     enums.$inject = ['$http', '$q', '$log', 'endpoints'];
@@ -68,49 +117,93 @@
 (function () {
     'use strict';
 
-    angular.module('springbok.core').service('encryptionUtils', encryptionUtils);
+    angular.module('springbok.core').service('notification', notification);
 
-    function encryptionUtils() {
-        this.encodeToBase64 = function (stringToEncode) {
-            return window.btoa(unescape(encodeURIComponent(stringToEncode)));
+    notification.$inject = ['$timeout'];
+
+    function notification($timeout) {
+        var notification = this;
+        var DEFAULTS = {
+            delay: 5000,
+            type: 'info'
+        };
+
+        /**
+         * Displays a notification and makes it fade after a specifific delay.
+         * @param {Object} notification the a notification object {type: 'info', message: 'MY_KEY', show: true}
+         * @param {int} delay the delay before the notification fades, 5000 milliseconds by default 
+         */
+        notification.display = function (notification, delay) {
+            delay = delay || DEFAULTS.delay;
+
+            notification.show = true;
+
+            if (!_.isNull(notification) && !_.isUndefined(notification)) {
+                $timeout(function () {
+                    notification.show = false;
+                }, delay);
+            }
+        };
+
+        /**
+         * Creates a notification from a message key and a type, info type by default.
+         * @param {string} type the type of alert (info|success|warning|error)
+         * @param {string} message the message key 
+         * @returns a notification object {type: 'info', message: 'MY_KEY', show: true}
+         */
+        notification.create = function (type, message) {
+            type = type || DEFAULTS.type;
+
+            return {
+                show: false,
+                type: type,
+                message: message
+            };
         };
     }
 })();
 (function () {
     'use strict';
 
-    angular.module('springbok.core').service('urlUtils', urlUtils);
+    angular.module('springbok.core').directive('sbNotification', ioNotification);
 
-    function urlUtils() {
-        this.addSlashAtTheEndIfNotPresent = function (url) {
-            if (!s.isBlank(url)) {
-                var lastIndexOfSlash = url.lastIndexOf('/');
-                var lastCharacterIsASlash = lastIndexOfSlash === url.length - 1;
+    var TEMPLATE = '<div ng-show="show" class="alert fixed-notification {{typeClass}}" style="z-index: 2000; position: fixed; width: 25%; top: 5%; right: 0.5%;">' + '<p style="float: left; width: 95%;">' + '{{message | translate}}' + '</p>' + '<button type="button" class="close" ng-click="close()" width: 5%;>' + '<i class="fa fa-times"></i>' + '</button>' + '</div>';
 
-                if (!lastCharacterIsASlash) {
-                    url += '/';
+    function ioNotification() {
+        return {
+            restrict: 'E',
+            template: TEMPLATE,
+            transclude: true,
+            replace: true,
+            scope: {
+                type: '=',
+                message: '=',
+                show: '='
+            },
+            link: function (scope) {
+                scope.show = true;
+
+                scope.close = function () {
+                    scope.show = false;
+                };
+
+                switch (scope.type) {
+                    case 'info':
+                        scope.typeClass = 'alert-info';
+                        break;
+                    case 'success':
+                        scope.typeClass = 'alert-success';
+                        break;
+                    case 'warning':
+                        scope.typeClass = 'alert-warning';
+                        break;
+                    case 'error':
+                        scope.typeClass = 'alert-danger';
+                        break;
+                    default:
+                        scope.typeClass = 'alert-info';
                 }
             }
-
-            return url;
-        };
-
-        this.processUrlWithPathVariables = function (url, pathVariables, pathVariableCharacter) {
-            var processedUrl = url,
-                paramMatch;
-
-            if (_.isUndefined(pathVariables) || !_.isObject(pathVariables)) {
-                return processedUrl;
-            }
-
-            _.each(_.keys(pathVariables), function (key) {
-                paramMatch = pathVariableCharacter + key;
-                if (s.include(url, paramMatch)) {
-                    processedUrl = processedUrl.replace(paramMatch, pathVariables[key]);
-                }
-            });
-
-            return processedUrl;
         };
     }
 })();
