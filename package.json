@@ -1,7 +1,12 @@
 {
   "jspm": {
     "dependencies": {
-      "angular": "github:angular/bower-angular@^1.5.0",
+      "angular": "github:angular/bower-angular@1.5.0",
+      "angular-route": "github:angular/bower-angular-route@1.5.0",
+      "angular-sanitize": "github:angular/bower-angular-sanitize@1.5.0",
+      "angular-translate": "github:angular-translate/bower-angular-translate@2.9.2",
+      "angular-translate-handler-log": "github:angular-translate/bower-angular-translate-handler-log@2.9.2",
+      "angular-translate-loader-static-files": "github:angular-translate/bower-angular-translate-loader-static-files@2.9.2",
       "angular/bower-angular-mocks": "github:angular/bower-angular-mocks@^1.5.0",
       "epeli/underscore.string": "github:epeli/underscore.string@^3.3.4",
       "jashkenas/underscore": "github:jashkenas/underscore@^1.8.3"
