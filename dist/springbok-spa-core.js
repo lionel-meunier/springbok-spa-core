@@ -1,7 +1,7 @@
 (function () {
     'use-strict';
 
-    const core = angular.module('springbok.core', []);
+    const core = angular.module('springbok.core', ['pascalprecht.translate', 'ngSanitize']);
 
     core.run(['endpoints', function (endpoints) {
         endpoints.add('enums', 'public/constants');
@@ -59,6 +59,67 @@
 (function () {
     'use strict';
 
+    angular.module('springbok.core').factory('httpInterceptor', httpInterceptor);
+
+    httpInterceptor.$inject = ['$rootScope', '$q'];
+
+    function httpInterceptor($rootScope, $q) {
+        return {
+            request: function (config) {
+                $rootScope.$broadcast('showSpinner');
+                return config || $q.when(config);
+            },
+            requestError: function (rejection) {
+                $rootScope.$broadcast('showSpinner');
+                return $q.reject(rejection);
+            },
+            response: function (response) {
+                $rootScope.$broadcast('hideSpinner');
+                return response || $q.when(response);
+            },
+            responseError: function (response) {
+                $rootScope.$broadcast('hideSpinner');
+                return response;
+            }
+        };
+    }
+
+    angular.module('springbok.core').config(['$httpProvider', function ($httpProvider) {
+        $httpProvider.interceptors.push('httpInterceptor');
+    }]);
+})();
+(function () {
+    'use strict';
+
+    angular.module('springbok.core').config(Logging);
+
+    Logging.$inject = ['$logProvider'];
+
+    function Logging($logProvider) {
+        $logProvider.debugEnabled(CONFIG.app.logDebugEnabled);
+    }
+})();
+(function () {
+    'use strict';
+
+    angular.module('springbok.core').config(Translation);
+
+    Translation.$inject = ['$translateProvider'];
+
+    function Translation($translateProvider) {
+        $translateProvider.useStaticFilesLoader({
+            prefix: '/i18n/',
+            suffix: '.json'
+        });
+
+        $translateProvider.preferredLanguage(CONFIG.app.preferredLanguage);
+        $translateProvider.useMissingTranslationHandlerLog();
+        $translateProvider.useSanitizeValueStrategy(null);
+    }
+})();
+(function () {
+    'use strict';
+
     angular.module('springbok.core').service('enums', enums);
 
     enums.$inject = ['$http', '$q', '$log', 'endpoints'];
@@ -111,6 +172,82 @@
         this.getDataByValue = function (enumName, valueSearch) {
             var data = this.getData(enumName);
             return _.findWhere(data, { value: valueSearch });
+        };
+    }
+})();
+(function () {
+    'use strict';
+
+    angular.module('springbok.core').factory('Search', Search);
+
+    function Search() {}
+})();
+(function () {
+    'use strict';
+
+    angular.module('springbok.core').service('pagination', pagination);
+
+    function pagination() {
+        return {
+            extendsPagedDataWithWalker: function (pagedData) {
+                if (pagedData.number === 0) {
+                    pagedData.currentPageFrom = 1;
+                    pagedData.currentPageTo = pagedData.numberOfElements < pagedData.size ? pagedData.numberOfElements : pagedData.size;
+                } else {
+                    pagedData.currentPageFrom = pagedData.number * pagedData.size + 1;
+                    pagedData.currentPageTo = pagedData.numberOfElements < pagedData.size ? pagedData.totalElements : pagedData.currentPageFrom - 1 + pagedData.size;
+                }
+            }
+        };
+    }
+})();
+(function () {
+    'use strict';
+
+    angular.module('springbok.core').service('searchCriterias', searchCriterias);
+
+    function searchCriterias() {
+        var searchCriterias = {};
+
+        /**
+         * Return all criterias for all search
+         * @returns {{}}
+         */
+        this.getSearchCriterias = function () {
+            return searchCriterias;
+        };
+        /**
+         * Return an object "criterias" for a specific search
+         * @param search
+         */
+        this.getCriteriasForSearch = function (search) {
+            return searchCriterias[search];
+        };
+        /**
+         * Add an object wich is criterias for a specific search
+         * For example : search = 'task' - criterias = {owner: 'admin', status: 'new'}
+         * @param search
+         * @param criterias
+         */
+        this.addCriteriasForSearch = function (search, criterias) {
+            if (search !== undefined && criterias !== undefined) {
+                searchCriterias[search] = criterias;
+            }
+        };
+        /**
+         * Remove all search criterias
+         */
+        this.resetAllSearchCriterias = function () {
+            searchCriterias = {};
+        };
+        /**
+         * Delete all the criterias for a specific search
+         * @param search
+         */
+        this.removeCriteriaForSearch = function (search) {
+            if (searchCriterias[search] !== undefined) {
+                searchCriterias[search] = undefined;
+            }
         };
     }
 })();
@@ -281,82 +418,6 @@
          */
         this.processParameters = function (route, parameters) {
             return urlUtils.processUrlWithPathVariables(route, parameters, ':');
-        };
-    }
-})();
-(function () {
-    'use strict';
-
-    angular.module('springbok.core').factory('Search', Search);
-
-    function Search() {}
-})();
-(function () {
-    'use strict';
-
-    angular.module('springbok.core').service('pagination', pagination);
-
-    function pagination() {
-        return {
-            extendsPagedDataWithWalker: function (pagedData) {
-                if (pagedData.number === 0) {
-                    pagedData.currentPageFrom = 1;
-                    pagedData.currentPageTo = pagedData.numberOfElements < pagedData.size ? pagedData.numberOfElements : pagedData.size;
-                } else {
-                    pagedData.currentPageFrom = pagedData.number * pagedData.size + 1;
-                    pagedData.currentPageTo = pagedData.numberOfElements < pagedData.size ? pagedData.totalElements : pagedData.currentPageFrom - 1 + pagedData.size;
-                }
-            }
-        };
-    }
-})();
-(function () {
-    'use strict';
-
-    angular.module('springbok.core').service('searchCriterias', searchCriterias);
-
-    function searchCriterias() {
-        var searchCriterias = {};
-
-        /**
-         * Return all criterias for all search
-         * @returns {{}}
-         */
-        this.getSearchCriterias = function () {
-            return searchCriterias;
-        };
-        /**
-         * Return an object "criterias" for a specific search
-         * @param search
-         */
-        this.getCriteriasForSearch = function (search) {
-            return searchCriterias[search];
-        };
-        /**
-         * Add an object wich is criterias for a specific search
-         * For example : search = 'task' - criterias = {owner: 'admin', status: 'new'}
-         * @param search
-         * @param criterias
-         */
-        this.addCriteriasForSearch = function (search, criterias) {
-            if (search !== undefined && criterias !== undefined) {
-                searchCriterias[search] = criterias;
-            }
-        };
-        /**
-         * Remove all search criterias
-         */
-        this.resetAllSearchCriterias = function () {
-            searchCriterias = {};
-        };
-        /**
-         * Delete all the criterias for a specific search
-         * @param search
-         */
-        this.removeCriteriaForSearch = function (search) {
-            if (searchCriterias[search] !== undefined) {
-                searchCriterias[search] = undefined;
-            }
         };
     }
 })();
