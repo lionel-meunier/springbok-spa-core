@@ -10,12 +10,7 @@
         
         navigation.auth = false;
         
-        navigation.currentPage = {
-            titleKey: '',
-            sectionKey: '',
-            subSectionKey: '',
-            breadcrumbsUrl: ''
-        };
+        init();
         
         $rootScope.$on('$routeChangeSuccess', function (event, current, previous) {
             var url = $location.absUrl();
@@ -29,16 +24,15 @@
         };
         
         navigation.handlePageInfos = function (pageObject) {
-            if (!_.isUndefined(pageObject) && !_.isUndefined(pageObject.titleKey)) {
-                navigation.currentPage.titleKey = pageObject.titleKey;
-                navigation.currentPage.sectionKey = pageObject.sectionKey;
-                navigation.currentPage.subSectionKey = pageObject.subSectionKey;
+            if (!_.isUndefined(pageObject) && !_.isUndefined(pageObject.htmlTitleKey)) {
+                navigation.currentPage.htmlTitleKey = pageObject.htmlTitleKey;
+                navigation.currentPage.breadcrumbsSectionKey = pageObject.breadcrumbsSectionKey;
+                navigation.currentPage.breadcrumbsSubSectionKey = pageObject.breadcrumbsSubSectionKey;
                 navigation.currentPage.breadcrumbsUrl = pageObject.breadcrumbsUrl;
+                navigation.currentPage.headerKey = pageObject.headerKey;
+                navigation.currentPage.subHeaderKey = pageObject.subHeaderKey;
             } else {
-                navigation.currentPage.titleKey = '';
-                navigation.currentPage.sectionKey = '';
-                navigation.currentPage.subSectionKey = '';
-                navigation.currentPage.breadcrumbsUrl = '';
+                init();
             }
         };
         
@@ -47,5 +41,16 @@
                 navigation.handlePageInfos(previousPage);
             }
         };
+        
+        function init() {
+            navigation.currentPage = {
+                htmlTitleKey: '',
+                breadcrumbsSectionKey: '',
+                breadcrumbsSubSectionKey: '',
+                breadcrumbsUrl: '',
+                headerKey: '',
+                subHeaderKey: ''
+            };  
+        }
     }
 })();

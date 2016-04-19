@@ -283,6 +283,82 @@
 (function () {
     'use strict';
 
+    angular.module('springbok.core').factory('Search', Search);
+
+    function Search() {}
+})();
+(function () {
+    'use strict';
+
+    angular.module('springbok.core').service('pagination', pagination);
+
+    function pagination() {
+        return {
+            extendsPagedDataWithWalker: function (pagedData) {
+                if (pagedData.number === 0) {
+                    pagedData.currentPageFrom = 1;
+                    pagedData.currentPageTo = pagedData.numberOfElements < pagedData.size ? pagedData.numberOfElements : pagedData.size;
+                } else {
+                    pagedData.currentPageFrom = pagedData.number * pagedData.size + 1;
+                    pagedData.currentPageTo = pagedData.numberOfElements < pagedData.size ? pagedData.totalElements : pagedData.currentPageFrom - 1 + pagedData.size;
+                }
+            }
+        };
+    }
+})();
+(function () {
+    'use strict';
+
+    angular.module('springbok.core').service('searchCriterias', searchCriterias);
+
+    function searchCriterias() {
+        var searchCriterias = {};
+
+        /**
+         * Return all criterias for all search
+         * @returns {{}}
+         */
+        this.getSearchCriterias = function () {
+            return searchCriterias;
+        };
+        /**
+         * Return an object "criterias" for a specific search
+         * @param search
+         */
+        this.getCriteriasForSearch = function (search) {
+            return searchCriterias[search];
+        };
+        /**
+         * Add an object wich is criterias for a specific search
+         * For example : search = 'task' - criterias = {owner: 'admin', status: 'new'}
+         * @param search
+         * @param criterias
+         */
+        this.addCriteriasForSearch = function (search, criterias) {
+            if (search !== undefined && criterias !== undefined) {
+                searchCriterias[search] = criterias;
+            }
+        };
+        /**
+         * Remove all search criterias
+         */
+        this.resetAllSearchCriterias = function () {
+            searchCriterias = {};
+        };
+        /**
+         * Delete all the criterias for a specific search
+         * @param search
+         */
+        this.removeCriteriaForSearch = function (search) {
+            if (searchCriterias[search] !== undefined) {
+                searchCriterias[search] = undefined;
+            }
+        };
+    }
+})();
+(function () {
+    'use strict';
+
     angular.module('springbok.core').service('endpoints', endpoints);
 
     endpoints.$inject = ['$log', 'urlUtils'];
@@ -359,12 +435,7 @@
 
         navigation.auth = false;
 
-        navigation.currentPage = {
-            titleKey: '',
-            sectionKey: '',
-            subSectionKey: '',
-            breadcrumbsUrl: ''
-        };
+        init();
 
         $rootScope.$on('$routeChangeSuccess', function (event, current, previous) {
             var url = $location.absUrl();
@@ -378,16 +449,15 @@
         };
 
         navigation.handlePageInfos = function (pageObject) {
-            if (!_.isUndefined(pageObject) && !_.isUndefined(pageObject.titleKey)) {
-                navigation.currentPage.titleKey = pageObject.titleKey;
-                navigation.currentPage.sectionKey = pageObject.sectionKey;
-                navigation.currentPage.subSectionKey = pageObject.subSectionKey;
+            if (!_.isUndefined(pageObject) && !_.isUndefined(pageObject.htmlTitleKey)) {
+                navigation.currentPage.htmlTitleKey = pageObject.htmlTitleKey;
+                navigation.currentPage.breadcrumbsSectionKey = pageObject.breadcrumbsSectionKey;
+                navigation.currentPage.breadcrumbsSubSectionKey = pageObject.breadcrumbsSubSectionKey;
                 navigation.currentPage.breadcrumbsUrl = pageObject.breadcrumbsUrl;
+                navigation.currentPage.headerKey = pageObject.headerKey;
+                navigation.currentPage.subHeaderKey = pageObject.subHeaderKey;
             } else {
-                navigation.currentPage.titleKey = '';
-                navigation.currentPage.sectionKey = '';
-                navigation.currentPage.subSectionKey = '';
-                navigation.currentPage.breadcrumbsUrl = '';
+                init();
             }
         };
 
@@ -396,81 +466,16 @@
                 navigation.handlePageInfos(previousPage);
             }
         };
-    }
-})();
-(function () {
-    'use strict';
 
-    angular.module('springbok.core').factory('Search', Search);
-
-    function Search() {}
-})();
-(function () {
-    'use strict';
-
-    angular.module('springbok.core').service('pagination', pagination);
-
-    function pagination() {
-        return {
-            extendsPagedDataWithWalker: function (pagedData) {
-                if (pagedData.number === 0) {
-                    pagedData.currentPageFrom = 1;
-                    pagedData.currentPageTo = pagedData.numberOfElements < pagedData.size ? pagedData.numberOfElements : pagedData.size;
-                } else {
-                    pagedData.currentPageFrom = pagedData.number * pagedData.size + 1;
-                    pagedData.currentPageTo = pagedData.numberOfElements < pagedData.size ? pagedData.totalElements : pagedData.currentPageFrom - 1 + pagedData.size;
-                }
-            }
-        };
-    }
-})();
-(function () {
-    'use strict';
-
-    angular.module('springbok.core').service('searchCriterias', searchCriterias);
-
-    function searchCriterias() {
-        var searchCriterias = {};
-
-        /**
-         * Return all criterias for all search
-         * @returns {{}}
-         */
-        this.getSearchCriterias = function () {
-            return searchCriterias;
-        };
-        /**
-         * Return an object "criterias" for a specific search
-         * @param search
-         */
-        this.getCriteriasForSearch = function (search) {
-            return searchCriterias[search];
-        };
-        /**
-         * Add an object wich is criterias for a specific search
-         * For example : search = 'task' - criterias = {owner: 'admin', status: 'new'}
-         * @param search
-         * @param criterias
-         */
-        this.addCriteriasForSearch = function (search, criterias) {
-            if (search !== undefined && criterias !== undefined) {
-                searchCriterias[search] = criterias;
-            }
-        };
-        /**
-         * Remove all search criterias
-         */
-        this.resetAllSearchCriterias = function () {
-            searchCriterias = {};
-        };
-        /**
-         * Delete all the criterias for a specific search
-         * @param search
-         */
-        this.removeCriteriaForSearch = function (search) {
-            if (searchCriterias[search] !== undefined) {
-                searchCriterias[search] = undefined;
-            }
-        };
+        function init() {
+            navigation.currentPage = {
+                htmlTitleKey: '',
+                breadcrumbsSectionKey: '',
+                breadcrumbsSubSectionKey: '',
+                breadcrumbsUrl: '',
+                headerKey: '',
+                subHeaderKey: ''
+            };
+        }
     }
 })();
