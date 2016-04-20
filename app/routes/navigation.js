@@ -12,12 +12,11 @@
         
         init();
         
-        $rootScope.$on('$routeChangeSuccess', function (event, current, previous) {
+        navigation.routeChange = function (current, previous) {
             var url = $location.absUrl();
-            $rootScope.$broadcast('handleMenuSelection', {url: url});
             navigation.updateView(current);
             navigation.handleError(current.templateUrl, previous);
-        });
+        };
 
         navigation.updateView = function (current) {
             navigation.handlePageInfos(current);

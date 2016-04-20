@@ -180,6 +180,273 @@
 (function () {
     'use strict';
 
+    angular.module('springbok.core').service('endpoints', endpoints);
+
+    endpoints.$inject = ['$log', 'urlUtils'];
+
+    function endpoints($log, urlUtils) {
+        this.apiRootPath = '';
+
+        this.routes = {};
+
+        /**
+         * Sets the server API root path
+         * @param {string} apiRootPath the server API root path
+         * @returns {void}
+         */
+        this.setApiRootPath = function (apiRootPath) {
+            this.apiRootPath = urlUtils.addSlashAtTheEndIfNotPresent(apiRootPath);
+        };
+
+        /**
+         * Adds a route, example : endpoints.add('enums', '/api/public/constants')
+         * @param {string} routeKey the 
+         * @param {string} route
+         * @returns {void}
+         */
+        this.add = function (routeKey, route) {
+            this.routes[routeKey] = route;
+        };
+
+        /**
+         * Retrieve a relative URL from a key, and process its parameters if exists
+         *
+         * @param routeName key of the requested route such as auth for /auth/logout
+         * @param parameters path parameters example :
+         * {
+         *  id: value,
+         *  name: value
+         * }
+         * for URLs like /myurl/:id/people/:name
+         *
+         * @returns {string} relative URL with processed parameters
+         * @see routes
+         */
+        this.get = function (routeName, parameters) {
+            var route = this.routes[routeName];
+
+            if (s.isBlank(this.apiRootPath)) {
+                $log.debug('The API root path has not been set, call setApiRootPath(apiRootPath) to set the API root path, example : endpoints.setApiRootPath(\'http://client.iocean.fr/api/\')');
+            }
+
+            return this.apiRootPath + this.processParameters(route, parameters);
+        };
+
+        /**
+         * Process URL parameters
+         *
+         * @param route relative raw URL such as /myurl/:id/people/:name
+         * @param parameters path parameters key/value object
+         * @return {string} relative url with parameter placeholders replaced by values
+         */
+        this.processParameters = function (route, parameters) {
+            return urlUtils.processUrlWithPathVariables(route, parameters, ':');
+        };
+    }
+})();
+(function () {
+    'use strict';
+
+    angular.module('springbok.core').service('navigation', navigation);
+
+    navigation.$inject = ['$rootScope', '$location', '$route'];
+
+    function navigation($rootScope, $location) {
+        var navigation = this;
+
+        navigation.auth = false;
+
+        init();
+
+        navigation.routeChange = function (current, previous) {
+            var url = $location.absUrl();
+            navigation.updateView(current);
+            navigation.handleError(current.templateUrl, previous);
+        };
+
+        navigation.updateView = function (current) {
+            navigation.handlePageInfos(current);
+        };
+
+        navigation.handlePageInfos = function (pageObject) {
+            if (!_.isUndefined(pageObject) && !_.isUndefined(pageObject.htmlTitleKey)) {
+                navigation.currentPage.htmlTitleKey = pageObject.htmlTitleKey;
+                navigation.currentPage.breadcrumbsSectionKey = pageObject.breadcrumbsSectionKey;
+                navigation.currentPage.breadcrumbsSubSectionKey = pageObject.breadcrumbsSubSectionKey;
+                navigation.currentPage.breadcrumbsUrl = pageObject.breadcrumbsUrl;
+                navigation.currentPage.headerKey = pageObject.headerKey;
+                navigation.currentPage.subHeaderKey = pageObject.subHeaderKey;
+            } else {
+                init();
+            }
+        };
+
+        navigation.handleError = function (currentPageUrl, previousPage) {
+            if (s.include(currentPageUrl, '404.html') || s.include(currentPageUrl, '500.html')) {
+                navigation.handlePageInfos(previousPage);
+            }
+        };
+
+        function init() {
+            navigation.currentPage = {
+                htmlTitleKey: '',
+                breadcrumbsSectionKey: '',
+                breadcrumbsSubSectionKey: '',
+                breadcrumbsUrl: '',
+                headerKey: '',
+                subHeaderKey: ''
+            };
+        }
+    }
+})();
+(function () {
+    'use strict';
+
+    angular.module('springbok.core').factory('Search', Search);
+
+    function Search() {}
+})();
+(function () {
+    'use strict';
+
+    angular.module('springbok.core').service('pagination', pagination);
+
+    function pagination() {
+        return {
+            extendsPagedDataWithWalker: function (pagedData) {
+                if (pagedData.number === 0) {
+                    pagedData.currentPageFrom = 1;
+                    pagedData.currentPageTo = pagedData.numberOfElements < pagedData.size ? pagedData.numberOfElements : pagedData.size;
+                } else {
+                    pagedData.currentPageFrom = pagedData.number * pagedData.size + 1;
+                    pagedData.currentPageTo = pagedData.numberOfElements < pagedData.size ? pagedData.totalElements : pagedData.currentPageFrom - 1 + pagedData.size;
+                }
+            }
+        };
+    }
+})();
+(function () {
+    'use strict';
+
+    angular.module('springbok.core').service('searchCriterias', searchCriterias);
+
+    function searchCriterias() {
+        var searchCriterias = {};
+
+        /**
+         * Return all criterias for all search
+         * @returns {{}}
+         */
+        this.getSearchCriterias = function () {
+            return searchCriterias;
+        };
+        /**
+         * Return an object "criterias" for a specific search
+         * @param search
+         */
+        this.getCriteriasForSearch = function (search) {
+            return searchCriterias[search];
+        };
+        /**
+         * Add an object wich is criterias for a specific search
+         * For example : search = 'task' - criterias = {owner: 'admin', status: 'new'}
+         * @param search
+         * @param criterias
+         */
+        this.addCriteriasForSearch = function (search, criterias) {
+            if (search !== undefined && criterias !== undefined) {
+                searchCriterias[search] = criterias;
+            }
+        };
+        /**
+         * Remove all search criterias
+         */
+        this.resetAllSearchCriterias = function () {
+            searchCriterias = {};
+        };
+        /**
+         * Delete all the criterias for a specific search
+         * @param search
+         */
+        this.removeCriteriaForSearch = function (search) {
+            if (searchCriterias[search] !== undefined) {
+                searchCriterias[search] = undefined;
+            }
+        };
+    }
+})();
+(function () {
+    'use strict';
+
+    angular.module('springbok.core').controller('menuController', menuController);
+
+    menuController.$inject = ['menuItems'];
+
+    function menuController(menuItems) {
+        var menu = this;
+
+        menu.isMinified = false;
+        menu.items = menuItems.all;
+
+        menu.collapseMenu = function () {
+            menu.isMinified = !menu.isMinified;
+        };
+
+        menu.resetState = function () {
+            menu.items.forEach(function (item) {
+                item.isActive = false;
+
+                if (menu.hasSubItems(item)) {
+                    item.isSubMenuOpened = false;
+
+                    item.subItems.forEach(function (subItem) {
+                        subItem.isActive = false;
+                    });
+                }
+            });
+        };
+
+        menu.hasSubItems = function (item) {
+            return !_.isNull(item.subItems) && !_.isUndefined(item.subItems);
+        };
+
+        menu.toggle = function (item, parent) {
+            var itemSubMenuWasNotOpened = !item.isSubMenuOpened;
+            var itemHasParent = !_.isNull(parent) && !_.isUndefined(parent);
+
+            menu.resetState();
+            if (menu.hasSubItems(item)) {
+                if (itemSubMenuWasNotOpened) {
+                    item.isSubMenuOpened = true;
+                }
+            } else {
+                if (itemHasParent) {
+                    parent.isSubMenuOpened = true;
+                }
+
+                item.isActive = true;
+            }
+        };
+    }
+})();
+(function () {
+    'use strict';
+
+    angular.module('springbok.core').service('menuItems', menuItems);
+
+    function menuItems() {
+        var menuItems = this;
+
+        menuItems.all = [];
+
+        menuItems.add = function (item) {
+            menuItems.all.push(item);
+        };
+    }
+})();
+(function () {
+    'use strict';
+
     angular.module('springbok.core').service('notification', notification);
 
     notification.$inject = ['$timeout'];
@@ -278,204 +545,5 @@
                 });
             }
         };
-    }
-})();
-(function () {
-    'use strict';
-
-    angular.module('springbok.core').factory('Search', Search);
-
-    function Search() {}
-})();
-(function () {
-    'use strict';
-
-    angular.module('springbok.core').service('pagination', pagination);
-
-    function pagination() {
-        return {
-            extendsPagedDataWithWalker: function (pagedData) {
-                if (pagedData.number === 0) {
-                    pagedData.currentPageFrom = 1;
-                    pagedData.currentPageTo = pagedData.numberOfElements < pagedData.size ? pagedData.numberOfElements : pagedData.size;
-                } else {
-                    pagedData.currentPageFrom = pagedData.number * pagedData.size + 1;
-                    pagedData.currentPageTo = pagedData.numberOfElements < pagedData.size ? pagedData.totalElements : pagedData.currentPageFrom - 1 + pagedData.size;
-                }
-            }
-        };
-    }
-})();
-(function () {
-    'use strict';
-
-    angular.module('springbok.core').service('searchCriterias', searchCriterias);
-
-    function searchCriterias() {
-        var searchCriterias = {};
-
-        /**
-         * Return all criterias for all search
-         * @returns {{}}
-         */
-        this.getSearchCriterias = function () {
-            return searchCriterias;
-        };
-        /**
-         * Return an object "criterias" for a specific search
-         * @param search
-         */
-        this.getCriteriasForSearch = function (search) {
-            return searchCriterias[search];
-        };
-        /**
-         * Add an object wich is criterias for a specific search
-         * For example : search = 'task' - criterias = {owner: 'admin', status: 'new'}
-         * @param search
-         * @param criterias
-         */
-        this.addCriteriasForSearch = function (search, criterias) {
-            if (search !== undefined && criterias !== undefined) {
-                searchCriterias[search] = criterias;
-            }
-        };
-        /**
-         * Remove all search criterias
-         */
-        this.resetAllSearchCriterias = function () {
-            searchCriterias = {};
-        };
-        /**
-         * Delete all the criterias for a specific search
-         * @param search
-         */
-        this.removeCriteriaForSearch = function (search) {
-            if (searchCriterias[search] !== undefined) {
-                searchCriterias[search] = undefined;
-            }
-        };
-    }
-})();
-(function () {
-    'use strict';
-
-    angular.module('springbok.core').service('endpoints', endpoints);
-
-    endpoints.$inject = ['$log', 'urlUtils'];
-
-    function endpoints($log, urlUtils) {
-        this.apiRootPath = '';
-
-        this.routes = {};
-
-        /**
-         * Sets the server API root path
-         * @param {string} apiRootPath the server API root path
-         * @returns {void}
-         */
-        this.setApiRootPath = function (apiRootPath) {
-            this.apiRootPath = urlUtils.addSlashAtTheEndIfNotPresent(apiRootPath);
-        };
-
-        /**
-         * Adds a route, example : endpoints.add('enums', '/api/public/constants')
-         * @param {string} routeKey the 
-         * @param {string} route
-         * @returns {void}
-         */
-        this.add = function (routeKey, route) {
-            this.routes[routeKey] = route;
-        };
-
-        /**
-         * Retrieve a relative URL from a key, and process its parameters if exists
-         *
-         * @param routeName key of the requested route such as auth for /auth/logout
-         * @param parameters path parameters example :
-         * {
-         *  id: value,
-         *  name: value
-         * }
-         * for URLs like /myurl/:id/people/:name
-         *
-         * @returns {string} relative URL with processed parameters
-         * @see routes
-         */
-        this.get = function (routeName, parameters) {
-            var route = this.routes[routeName];
-
-            if (s.isBlank(this.apiRootPath)) {
-                $log.debug('The API root path has not been set, call setApiRootPath(apiRootPath) to set the API root path, example : endpoints.setApiRootPath(\'http://client.iocean.fr/api/\')');
-            }
-
-            return this.apiRootPath + this.processParameters(route, parameters);
-        };
-
-        /**
-         * Process URL parameters
-         *
-         * @param route relative raw URL such as /myurl/:id/people/:name
-         * @param parameters path parameters key/value object
-         * @return {string} relative url with parameter placeholders replaced by values
-         */
-        this.processParameters = function (route, parameters) {
-            return urlUtils.processUrlWithPathVariables(route, parameters, ':');
-        };
-    }
-})();
-(function () {
-    'use strict';
-
-    angular.module('springbok.core').service('navigation', navigation);
-
-    navigation.$inject = ['$rootScope', '$location', '$route'];
-
-    function navigation($rootScope, $location) {
-        var navigation = this;
-
-        navigation.auth = false;
-
-        init();
-
-        $rootScope.$on('$routeChangeSuccess', function (event, current, previous) {
-            var url = $location.absUrl();
-            $rootScope.$broadcast('handleMenuSelection', { url: url });
-            navigation.updateView(current);
-            navigation.handleError(current.templateUrl, previous);
-        });
-
-        navigation.updateView = function (current) {
-            navigation.handlePageInfos(current);
-        };
-
-        navigation.handlePageInfos = function (pageObject) {
-            if (!_.isUndefined(pageObject) && !_.isUndefined(pageObject.htmlTitleKey)) {
-                navigation.currentPage.htmlTitleKey = pageObject.htmlTitleKey;
-                navigation.currentPage.breadcrumbsSectionKey = pageObject.breadcrumbsSectionKey;
-                navigation.currentPage.breadcrumbsSubSectionKey = pageObject.breadcrumbsSubSectionKey;
-                navigation.currentPage.breadcrumbsUrl = pageObject.breadcrumbsUrl;
-                navigation.currentPage.headerKey = pageObject.headerKey;
-                navigation.currentPage.subHeaderKey = pageObject.subHeaderKey;
-            } else {
-                init();
-            }
-        };
-
-        navigation.handleError = function (currentPageUrl, previousPage) {
-            if (s.include(currentPageUrl, '404.html') || s.include(currentPageUrl, '500.html')) {
-                navigation.handlePageInfos(previousPage);
-            }
-        };
-
-        function init() {
-            navigation.currentPage = {
-                htmlTitleKey: '',
-                breadcrumbsSectionKey: '',
-                breadcrumbsSubSectionKey: '',
-                breadcrumbsUrl: '',
-                headerKey: '',
-                subHeaderKey: ''
-            };
-        }
     }
 })();
