@@ -14,7 +14,7 @@
             this.createColumns();
             this.initMaxPerPage();
 
-            this.configuration.searched = false;
+            this.searched = false;
 
             this.results = {
                 content: [],
@@ -29,7 +29,7 @@
             if (!_.isNull(direction) && !_.isUndefined(direction)){
                 this.configuration.columns[columnName] = direction;
             } else {
-                this.configutation.columns[columnName] = this.configutation.columns[columnName] === 'asc' ? 'desc' : 'asc';
+                this.configuration.columns[columnName] = this.configuration.columns[columnName] === 'asc' ? 'desc' : 'asc';
             }
 
             this.search();
@@ -82,7 +82,7 @@
             $http.get(self.configuration.endpoint, config).then(function(searchData) {
                 if (searchData.status === 200) {
                     self.results = searchData.data;
-                    self.configuration.searched = true;
+                    self.searched = true;
                     pagination.extendsPagedDataWithWalker(self.results);
                 }
 
