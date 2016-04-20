@@ -3,9 +3,7 @@
 
     angular.module('springbok.core').service('navigation', navigation);
 
-    navigation.$inject = ['$rootScope', '$location', '$route'];
-
-    function navigation($rootScope, $location) {
+    function navigation() {
         var navigation = this;
         
         navigation.auth = false;
@@ -13,7 +11,6 @@
         init();
         
         navigation.routeChange = function (current, previous) {
-            var url = $location.absUrl();
             navigation.updateView(current);
             navigation.handleError(current.templateUrl, previous);
         };

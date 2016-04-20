@@ -5,46 +5,50 @@
 
     function searchCriterias() {
         var searchCriterias = {};
-
+        
         /**
-         * Return all criterias for all search
-         * @returns {{}}
-         */
-        this.getSearchCriterias = function() {
-            return searchCriterias;
-        };
-        /**
-         * Return an object "criterias" for a specific search
-         * @param search
-         */
-        this.getCriteriasForSearch = function(search) {
-            return searchCriterias[search];
-        };
-        /**
-         * Add an object wich is criterias for a specific search
+         * Adds an object wich is criterias for a specific search
          * For example : search = 'task' - criterias = {owner: 'admin', status: 'new'}
          * @param search
          * @param criterias
          */
-        this.addCriteriasForSearch = function(search, criterias) {
+        this.set = function(search, criterias) {
             if (search !== undefined && criterias !== undefined) {
                 searchCriterias[search] = criterias;
             }
         };
+        
         /**
-         * Remove all search criterias
+         * Returns all criterias for all search
+         * @returns {{}}
          */
-        this.resetAllSearchCriterias = function() {
-            searchCriterias = {};
+        this.getAll = function() {
+            return searchCriterias;
         };
+        
         /**
-         * Delete all the criterias for a specific search
+         * Returns an object "criterias" for a specific search
          * @param search
          */
-        this.removeCriteriaForSearch = function(search) {
+        this.get = function(search) {
+            return searchCriterias[search];
+        };
+        
+        /**
+         * Deletes all the criterias for a specific search
+         * @param search
+         */
+        this.remove = function(search) {
             if (searchCriterias[search] !== undefined) {
                 searchCriterias[search] = undefined;
             }
+        };
+        
+        /**
+         * Removes all search criterias
+         */
+        this.clear = function() {
+            searchCriterias = {};
         };
     }
 })();
