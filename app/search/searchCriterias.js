@@ -27,6 +27,15 @@
         };
         
         /**
+         * Returns true if criterias exist for this search name, false otherwise
+         * @param {type} search the search name
+         * @returns {Boolean} 
+         */
+        this.has = function(search) {
+            return searchCriterias.hasOwnProperty(search);
+        };
+        
+        /**
          * Returns an object "criterias" for a specific search
          * @param search
          */

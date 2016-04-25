@@ -122,64 +122,6 @@
 (function () {
     'use strict';
 
-    angular.module('springbok.core').service('enums', enums);
-
-    enums.$inject = ['$http', '$q', '$log', 'endpoints'];
-
-    function enums($http, $q, $log, endpoints) {
-        var isReady = false;
-
-        this.data = {};
-        this.ready = $q.defer();
-
-        /**
-         * Get all constants
-         */
-        this.load = function () {
-            var self = this;
-
-            if (isReady === false) {
-                $http.get(endpoints.get('enums')).success(function (data) {
-                    self.data = data;
-                    isReady = true;
-                    self.ready.resolve();
-                }).error(function () {
-                    $log.error('enumsService is not loaded');
-                    self.ready.reject();
-                });
-            }
-        };
-
-        /**
-         * Get ready promise
-         * @return {*}
-         */
-        this.isReady = function () {
-            return this.ready.promise;
-        };
-        /**
-         * Get enums with name in data
-         * @param enumName {String} name to enum
-         * @return {*}
-         */
-        this.getData = function (enumName) {
-            return this.data[enumName];
-        };
-
-        /**
-         * Get enums with name in data
-         * @param enumName {String} name to enum
-         * @return {*}
-         */
-        this.getDataByValue = function (enumName, valueSearch) {
-            var data = this.getData(enumName);
-            return _.findWhere(data, { value: valueSearch });
-        };
-    }
-})();
-(function () {
-    'use strict';
-
     angular.module('springbok.core').service('endpoints', endpoints);
 
     endpoints.$inject = ['$log', 'urlUtils'];
@@ -299,6 +241,64 @@
 (function () {
     'use strict';
 
+    angular.module('springbok.core').service('enums', enums);
+
+    enums.$inject = ['$http', '$q', '$log', 'endpoints'];
+
+    function enums($http, $q, $log, endpoints) {
+        var isReady = false;
+
+        this.data = {};
+        this.ready = $q.defer();
+
+        /**
+         * Get all constants
+         */
+        this.load = function () {
+            var self = this;
+
+            if (isReady === false) {
+                $http.get(endpoints.get('enums')).success(function (data) {
+                    self.data = data;
+                    isReady = true;
+                    self.ready.resolve();
+                }).error(function () {
+                    $log.error('enumsService is not loaded');
+                    self.ready.reject();
+                });
+            }
+        };
+
+        /**
+         * Get ready promise
+         * @return {*}
+         */
+        this.isReady = function () {
+            return this.ready.promise;
+        };
+        /**
+         * Get enums with name in data
+         * @param enumName {String} name to enum
+         * @return {*}
+         */
+        this.getData = function (enumName) {
+            return this.data[enumName];
+        };
+
+        /**
+         * Get enums with name in data
+         * @param enumName {String} name to enum
+         * @return {*}
+         */
+        this.getDataByValue = function (enumName, valueSearch) {
+            var data = this.getData(enumName);
+            return _.findWhere(data, { value: valueSearch });
+        };
+    }
+})();
+(function () {
+    'use strict';
+
     angular.module('springbok.core').factory('Search', Search);
 
     Search.$inject = ['$log', '$q', '$http', 'pagination', 'searchCriterias'];
@@ -311,6 +311,7 @@
 
             this.createColumns();
             this.initMaxPerPage();
+            this.getCriterias();
 
             this.searched = false;
 
@@ -407,9 +408,15 @@
             var self = this;
             self.configuration.columns = {};
 
-            self.configuration.columnsNames.forEach(function (columnName) {
-                self.configuration.columns[columnName] = columnName !== self.configuration.currentOrderBy ? DEFAULT_DIRECTION : self.configuration.currentDirection;
+            self.configuration.columnList.forEach(function (column) {
+                self.configuration.columns[column.name] = column.name !== self.configuration.currentOrderBy ? DEFAULT_DIRECTION : self.configuration.currentDirection;
             });
+        };
+
+        Search.prototype.getCriterias = function () {
+            if (searchCriterias.has(this.configuration.criteriasKey)) {
+                this.configuration.form = searchCriterias.get(this.configuration.criteriasKey);
+            }
         };
 
         return Search;
@@ -443,6 +450,63 @@
 (function () {
     'use strict';
 
+    angular.module('springbok.core').directive('sbSearchColumns', sbSearchColumns);
+
+    var TEMPLATE = '<th ng-repeat="column in search.configuration.columnList" ng-transclude' + 'class="pointer"' + 'ng-click="search.orderBy(column.name)">' + '<i class="fa"' + 'ng-class="(search.configuration.columns[column.name] === \'asc\')  ? \'fa-caret-down\' : \'fa-caret-up\'"></i>' + '{{column.key | translate}}' + '</th>';
+
+    function sbSearchColumns() {
+        return {
+            restrict: 'E',
+            template: TEMPLATE,
+            transclude: true,
+            replace: true,
+            scope: {
+                search: '='
+            }
+        };
+    }
+})();
+(function () {
+    'use strict';
+
+    angular.module('springbok.core').directive('sbSearchFooter', sbSearchFooter);
+
+    var TEMPLATE = '<div class="row-fluid"' + 'ng-show="search.results.totalElements > 0">' + '<div class="span6">' + '<div class="dataTables_info">' + '{{\'SEARCH_RESULTS_CAPITALIZED\'| translate}} {{search.results.currentPageFrom}} {{\'SEARCH_TO\'| translate}} ' + '{{search.results.currentPageTo}} {{\'SEARCH_OF\'| translate}} {{search.results.totalElements}}' + '</div>' + '</div>' + '<div class="span6">' + '<uib-pagination' + 'boundary-links="true"' + 'items-per-page="configuration.maxPerPage"' + 'total-items="search.results.totalElements"' + 'ng-model="search.results.currentPage"' + 'ng-change="search.search()"' + 'class="pagination-sm"' + 'previous-text="&lsaquo;"' + 'next-text="&rsaquo;"' + 'first-text="&laquo;"' + 'last-text="&raquo;">' + '</uib-pagination>' + '</div>' + '</div>;';
+
+    function sbSearchFooter() {
+        return {
+            restrict: 'E',
+            template: TEMPLATE,
+            transclude: true,
+            replace: true,
+            scope: {
+                search: '='
+            }
+        };
+    }
+})();
+(function () {
+    'use strict';
+
+    angular.module('springbok.core').directive('sbSearchHeader', sbSearchHeader);
+
+    var TEMPLATE = '<div class="table-header"' + 'ng-show="search.searched">' + '{{search.results.totalElements}} {{\'SEARCH_RESULTS_LOWERCASE\' | translate}}' + '<div class="pull-right table-header-tools form-inline">' + '<label for="maxPerPage">{{\'SEARCH_MAXPERPAGE\' | translate}}</label>' + '<select id="maxPerPage"' + 'class="input-small"' + 'style="margin: 0 10px"' + 'ng-model="search.configuration.maxPerPage"' + 'ng-options="maxPerPage for maxPerPage in search.configuration.allMaxPerPage"' + 'ng-change="search.search()">' + '</select>' + '</div>' + '</div>';
+
+    function sbSearchHeader() {
+        return {
+            restrict: 'E',
+            template: TEMPLATE,
+            transclude: true,
+            replace: true,
+            scope: {
+                search: '='
+            }
+        };
+    }
+})();
+(function () {
+    'use strict';
+
     angular.module('springbok.core').service('searchCriterias', searchCriterias);
 
     function searchCriterias() {
@@ -466,6 +530,15 @@
          */
         this.getAll = function () {
             return searchCriterias;
+        };
+
+        /**
+         * Returns true if criterias exist for this search name, false otherwise
+         * @param {type} search the search name
+         * @returns {Boolean} 
+         */
+        this.has = function (search) {
+            return searchCriterias.hasOwnProperty(search);
         };
 
         /**
@@ -623,11 +696,11 @@
 (function () {
     'use strict';
 
-    angular.module('springbok.core').directive('sbNotification', ioNotification);
+    angular.module('springbok.core').directive('sbNotification', sbNotification);
 
     var TEMPLATE = '<div ng-show="show" class="alert fixed-notification {{typeClass}}" style="z-index: 2000; position: fixed; width: 25%; top: 5%; right: 0.5%;">' + '<p style="float: left; width: 95%;">' + '{{message | translate}}' + '</p>' + '<button type="button" class="close" ng-click="close()" width: 5%;>' + '<i class="fa fa-times"></i>' + '</button>' + '</div>';
 
-    function ioNotification() {
+    function sbNotification() {
         return {
             restrict: 'E',
             template: TEMPLATE,

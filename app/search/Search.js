@@ -13,6 +13,7 @@
 
             this.createColumns();
             this.initMaxPerPage();
+            this.getCriterias();
 
             this.searched = false;
 
@@ -111,12 +112,18 @@
             var self = this;
             self.configuration.columns = {};
 
-            self.configuration.columnsNames.forEach(function(columnName) {
-                self.configuration.columns[columnName] = 
-                    columnName !== self.configuration.currentOrderBy ? 
+            self.configuration.columnList.forEach(function(column) {
+                self.configuration.columns[column.name] = 
+                    column.name !== self.configuration.currentOrderBy ? 
                     DEFAULT_DIRECTION :
                     self.configuration.currentDirection;
             });
+        };
+            
+        Search.prototype.getCriterias = function() {
+            if (searchCriterias.has(this.configuration.criteriasKey)) {
+                this.configuration.form = searchCriterias.get(this.configuration.criteriasKey);
+            } 
         };
             
         return Search;

@@ -1,7 +1,7 @@
 (function () {
     'use strict';
 
-    angular.module('springbok.core').directive('sbNotification', ioNotification);
+    angular.module('springbok.core').directive('sbNotification', sbNotification);
     
     var TEMPLATE = '<div ng-show="show" class="alert fixed-notification {{typeClass}}" style="z-index: 2000; position: fixed; width: 25%; top: 5%; right: 0.5%;">' +
                         '<p style="float: left; width: 95%;">' +
@@ -12,7 +12,7 @@
                         '</button>' +
                     '</div>';
     
-    function ioNotification() {
+    function sbNotification() {
         return {
             restrict: 'E',
             template: TEMPLATE,
