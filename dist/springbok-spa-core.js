@@ -12,55 +12,6 @@
 (function () {
     'use strict';
 
-    angular.module('springbok.core').service('encryptionUtils', encryptionUtils);
-
-    function encryptionUtils() {
-        this.encodeToBase64 = function (stringToEncode) {
-            return window.btoa(unescape(encodeURIComponent(stringToEncode)));
-        };
-    }
-})();
-(function () {
-    'use strict';
-
-    angular.module('springbok.core').service('urlUtils', urlUtils);
-
-    function urlUtils() {
-        this.addSlashAtTheEndIfNotPresent = function (url) {
-            if (!s.isBlank(url)) {
-                var lastIndexOfSlash = url.lastIndexOf('/');
-                var lastCharacterIsASlash = lastIndexOfSlash === url.length - 1;
-
-                if (!lastCharacterIsASlash) {
-                    url += '/';
-                }
-            }
-
-            return url;
-        };
-
-        this.processUrlWithPathVariables = function (url, pathVariables, pathVariableCharacter) {
-            var processedUrl = url,
-                paramMatch;
-
-            if (_.isUndefined(pathVariables) || !_.isObject(pathVariables)) {
-                return processedUrl;
-            }
-
-            _.each(_.keys(pathVariables), function (key) {
-                paramMatch = pathVariableCharacter + key;
-                if (s.include(url, paramMatch)) {
-                    processedUrl = processedUrl.replace(paramMatch, pathVariables[key]);
-                }
-            });
-
-            return processedUrl;
-        };
-    }
-})();
-(function () {
-    'use strict';
-
     angular.module('springbok.core').factory('httpInterceptor', httpInterceptor);
 
     httpInterceptor.$inject = ['$rootScope', '$q'];
@@ -117,125 +68,6 @@
         $translateProvider.preferredLanguage(CONFIG.app.preferredLanguage);
         $translateProvider.useMissingTranslationHandlerLog();
         $translateProvider.useSanitizeValueStrategy(null);
-    }
-})();
-(function () {
-    'use strict';
-
-    angular.module('springbok.core').service('endpoints', endpoints);
-
-    endpoints.$inject = ['$log', 'urlUtils'];
-
-    function endpoints($log, urlUtils) {
-        this.apiRootPath = '';
-
-        this.routes = {};
-
-        /**
-         * Sets the server API root path
-         * @param {string} apiRootPath the server API root path
-         * @returns {void}
-         */
-        this.setApiRootPath = function (apiRootPath) {
-            this.apiRootPath = urlUtils.addSlashAtTheEndIfNotPresent(apiRootPath);
-        };
-
-        /**
-         * Adds a route, example : endpoints.add('enums', '/api/public/constants')
-         * @param {string} routeKey the 
-         * @param {string} route
-         * @returns {void}
-         */
-        this.add = function (routeKey, route) {
-            this.routes[routeKey] = route;
-        };
-
-        /**
-         * Retrieve a relative URL from a key, and process its parameters if exists
-         *
-         * @param routeName key of the requested route such as auth for /auth/logout
-         * @param parameters path parameters example :
-         * {
-         *  id: value,
-         *  name: value
-         * }
-         * for URLs like /myurl/:id/people/:name
-         *
-         * @returns {string} relative URL with processed parameters
-         * @see routes
-         */
-        this.get = function (routeName, parameters) {
-            var route = this.routes[routeName];
-
-            if (s.isBlank(this.apiRootPath)) {
-                $log.debug('The API root path has not been set, call setApiRootPath(apiRootPath) to set the API root path, example : endpoints.setApiRootPath(\'http://client.iocean.fr/api/\')');
-            }
-
-            return this.apiRootPath + this.processParameters(route, parameters);
-        };
-
-        /**
-         * Process URL parameters
-         *
-         * @param route relative raw URL such as /myurl/:id/people/:name
-         * @param parameters path parameters key/value object
-         * @return {string} relative url with parameter placeholders replaced by values
-         */
-        this.processParameters = function (route, parameters) {
-            return urlUtils.processUrlWithPathVariables(route, parameters, ':');
-        };
-    }
-})();
-(function () {
-    'use strict';
-
-    angular.module('springbok.core').service('navigation', navigation);
-
-    function navigation() {
-        var navigation = this;
-
-        navigation.auth = false;
-
-        init();
-
-        navigation.routeChange = function (current, previous) {
-            navigation.updateView(current);
-            navigation.handleError(current.templateUrl, previous);
-        };
-
-        navigation.updateView = function (current) {
-            navigation.handlePageInfos(current);
-        };
-
-        navigation.handlePageInfos = function (pageObject) {
-            if (!_.isUndefined(pageObject) && !_.isUndefined(pageObject.htmlTitleKey)) {
-                navigation.currentPage.htmlTitleKey = pageObject.htmlTitleKey;
-                navigation.currentPage.breadcrumbsSectionKey = pageObject.breadcrumbsSectionKey;
-                navigation.currentPage.breadcrumbsSubSectionKey = pageObject.breadcrumbsSubSectionKey;
-                navigation.currentPage.breadcrumbsUrl = pageObject.breadcrumbsUrl;
-                navigation.currentPage.headerKey = pageObject.headerKey;
-                navigation.currentPage.subHeaderKey = pageObject.subHeaderKey;
-            } else {
-                init();
-            }
-        };
-
-        navigation.handleError = function (currentPageUrl, previousPage) {
-            if (s.include(currentPageUrl, '404.html') || s.include(currentPageUrl, '500.html')) {
-                navigation.handlePageInfos(previousPage);
-            }
-        };
-
-        function init() {
-            navigation.currentPage = {
-                htmlTitleKey: '',
-                breadcrumbsSectionKey: '',
-                breadcrumbsSubSectionKey: '',
-                breadcrumbsUrl: '',
-                headerKey: '',
-                subHeaderKey: ''
-            };
-        }
     }
 })();
 (function () {
@@ -450,25 +282,6 @@
 (function () {
     'use strict';
 
-    angular.module('springbok.core').directive('sbSearchColumns', sbSearchColumns);
-
-    var TEMPLATE = '<th ng-repeat="column in search.configuration.columnList" ng-transclude' + 'class="pointer"' + 'ng-click="search.orderBy(column.name)">' + '<i class="fa"' + 'ng-class="(search.configuration.columns[column.name] === \'asc\')  ? \'fa-caret-down\' : \'fa-caret-up\'"></i>' + '{{column.key | translate}}' + '</th>';
-
-    function sbSearchColumns() {
-        return {
-            restrict: 'E',
-            template: TEMPLATE,
-            transclude: true,
-            replace: true,
-            scope: {
-                search: '='
-            }
-        };
-    }
-})();
-(function () {
-    'use strict';
-
     angular.module('springbok.core').directive('sbSearchFooter', sbSearchFooter);
 
     var TEMPLATE = '<div class="row-fluid"' + 'ng-show="search.results.totalElements > 0">' + '<div class="span6">' + '<div class="dataTables_info">' + '{{\'SEARCH_RESULTS_CAPITALIZED\'| translate}} {{search.results.currentPageFrom}} {{\'SEARCH_TO\'| translate}} ' + '{{search.results.currentPageTo}} {{\'SEARCH_OF\'| translate}} {{search.results.totalElements}}' + '</div>' + '</div>' + '<div class="span6">' + '<uib-pagination' + 'boundary-links="true"' + 'items-per-page="configuration.maxPerPage"' + 'total-items="search.results.totalElements"' + 'ng-model="search.results.currentPage"' + 'ng-change="search.search()"' + 'class="pagination-sm"' + 'previous-text="&lsaquo;"' + 'next-text="&rsaquo;"' + 'first-text="&laquo;"' + 'last-text="&raquo;">' + '</uib-pagination>' + '</div>' + '</div>;';
@@ -564,6 +377,189 @@
          */
         this.clear = function () {
             searchCriterias = {};
+        };
+    }
+})();
+(function () {
+    'use strict';
+
+    angular.module('springbok.core').service('endpoints', endpoints);
+
+    endpoints.$inject = ['$log', 'urlUtils'];
+
+    function endpoints($log, urlUtils) {
+        this.apiRootPath = '';
+
+        this.routes = {};
+
+        /**
+         * Sets the server API root path
+         * @param {string} apiRootPath the server API root path
+         * @returns {void}
+         */
+        this.setApiRootPath = function (apiRootPath) {
+            this.apiRootPath = urlUtils.addSlashAtTheEndIfNotPresent(apiRootPath);
+        };
+
+        /**
+         * Adds a route, example : endpoints.add('enums', '/api/public/constants')
+         * @param {string} routeKey the 
+         * @param {string} route
+         * @returns {void}
+         */
+        this.add = function (routeKey, route) {
+            this.routes[routeKey] = route;
+        };
+
+        /**
+         * Retrieve a relative URL from a key, and process its parameters if exists
+         *
+         * @param routeName key of the requested route such as auth for /auth/logout
+         * @param parameters path parameters example :
+         * {
+         *  id: value,
+         *  name: value
+         * }
+         * for URLs like /myurl/:id/people/:name
+         *
+         * @returns {string} relative URL with processed parameters
+         * @see routes
+         */
+        this.get = function (routeName, parameters) {
+            var route = this.routes[routeName];
+
+            if (s.isBlank(this.apiRootPath)) {
+                $log.debug('The API root path has not been set, call setApiRootPath(apiRootPath) to set the API root path, example : endpoints.setApiRootPath(\'http://client.iocean.fr/api/\')');
+            }
+
+            return this.apiRootPath + this.processParameters(route, parameters);
+        };
+
+        /**
+         * Process URL parameters
+         *
+         * @param route relative raw URL such as /myurl/:id/people/:name
+         * @param parameters path parameters key/value object
+         * @return {string} relative url with parameter placeholders replaced by values
+         */
+        this.processParameters = function (route, parameters) {
+            return urlUtils.processUrlWithPathVariables(route, parameters, ':');
+        };
+    }
+})();
+(function () {
+    'use strict';
+
+    angular.module('springbok.core').service('navigation', navigation);
+
+    function navigation() {
+        var navigation = this;
+
+        navigation.auth = false;
+
+        init();
+
+        navigation.routeChange = function (current, previous) {
+            navigation.updateView(current);
+            navigation.handleError(current.templateUrl, previous);
+        };
+
+        navigation.updateView = function (current) {
+            navigation.handlePageInfos(current);
+        };
+
+        navigation.handlePageInfos = function (pageObject) {
+            if (!_.isUndefined(pageObject) && !_.isUndefined(pageObject.htmlTitleKey)) {
+                navigation.currentPage.htmlTitleKey = pageObject.htmlTitleKey;
+                navigation.currentPage.breadcrumbsSectionKey = pageObject.breadcrumbsSectionKey;
+                navigation.currentPage.breadcrumbsSubSectionKey = pageObject.breadcrumbsSubSectionKey;
+                navigation.currentPage.breadcrumbsUrl = pageObject.breadcrumbsUrl;
+                navigation.currentPage.headerKey = pageObject.headerKey;
+                navigation.currentPage.subHeaderKey = pageObject.subHeaderKey;
+            } else {
+                init();
+            }
+        };
+
+        navigation.handleError = function (currentPageUrl, previousPage) {
+            if (s.include(currentPageUrl, '404.html') || s.include(currentPageUrl, '500.html')) {
+                navigation.handlePageInfos(previousPage);
+            }
+        };
+
+        function init() {
+            navigation.currentPage = {
+                htmlTitleKey: '',
+                breadcrumbsSectionKey: '',
+                breadcrumbsSubSectionKey: '',
+                breadcrumbsUrl: '',
+                headerKey: '',
+                subHeaderKey: ''
+            };
+        }
+    }
+})();
+(function () {
+    'use strict';
+
+    angular.module('springbok.core').filter('statusKey', statusKey);
+
+    function statusKey() {
+        return function (status) {
+            if (_.isNull && _.isUndefined && status === true) {
+                return 'GLOBAL_ACTIVATED';
+            } else {
+                return 'GLOBAL_DEACTIVATED';
+            }
+        };
+    }
+})();
+(function () {
+    'use strict';
+
+    angular.module('springbok.core').service('encryptionUtils', encryptionUtils);
+
+    function encryptionUtils() {
+        this.encodeToBase64 = function (stringToEncode) {
+            return window.btoa(unescape(encodeURIComponent(stringToEncode)));
+        };
+    }
+})();
+(function () {
+    'use strict';
+
+    angular.module('springbok.core').service('urlUtils', urlUtils);
+
+    function urlUtils() {
+        this.addSlashAtTheEndIfNotPresent = function (url) {
+            if (!s.isBlank(url)) {
+                var lastIndexOfSlash = url.lastIndexOf('/');
+                var lastCharacterIsASlash = lastIndexOfSlash === url.length - 1;
+
+                if (!lastCharacterIsASlash) {
+                    url += '/';
+                }
+            }
+
+            return url;
+        };
+
+        this.processUrlWithPathVariables = function (url, pathVariables, pathVariableCharacter) {
+            var processedUrl = url,
+                paramMatch;
+
+            if (_.isUndefined(pathVariables) || !_.isObject(pathVariables)) {
+                return processedUrl;
+            }
+
+            _.each(_.keys(pathVariables), function (key) {
+                paramMatch = pathVariableCharacter + key;
+                if (s.include(url, paramMatch)) {
+                    processedUrl = processedUrl.replace(paramMatch, pathVariables[key]);
+                }
+            });
+
+            return processedUrl;
         };
     }
 })();
