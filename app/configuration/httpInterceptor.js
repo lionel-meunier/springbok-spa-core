@@ -22,6 +22,15 @@
             },
             responseError: function (response) {
                 $rootScope.$broadcast('hideSpinner');
+                
+                if (response.status === 401) {
+                    $rootScope.$broadcast('http-error-401');
+                } else if (response.status === 403) {
+                    $rootScope.$broadcast('http-error-403');
+                } else if (response.status === 404) {
+                    $rootScope.$broadcast('http-error-404');
+                }
+                
                 return response;
             }
         };
