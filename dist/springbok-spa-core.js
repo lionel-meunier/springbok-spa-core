@@ -278,7 +278,7 @@
             this.results = {
                 content: [],
                 totalElements: 0,
-                currentPage: 0
+                currentPage: 1
             };
         };
 
@@ -290,6 +290,8 @@
             } else {
                 this.configuration.columns[columnName] = this.configuration.columns[columnName] === 'asc' ? 'desc' : 'asc';
             }
+
+            this.configuration.currentDirection = this.configuration.columns[columnName];
 
             this.search();
         };
@@ -315,7 +317,7 @@
                     direction: self.configuration.columns[self.configuration.currentOrderBy],
                     properties: self.configuration.currentOrderBy,
                     pageSize: self.configuration.maxPerPage,
-                    pageNumber: self.results.currentPage
+                    pageNumber: self.results.currentPage - 1
                 }
             };
 
@@ -341,6 +343,7 @@
             $http.get(self.configuration.endpoint, config).then(function (searchData) {
                 if (searchData.status === 200) {
                     self.results = searchData.data;
+                    self.results.currentPage = config.params.pageNumber + 1;
                     self.searched = true;
                     pagination.extendsPagedDataWithWalker(self.results);
                 }
@@ -412,7 +415,7 @@
 
     angular.module('springbok.core').directive('sbSearchFooter', sbSearchFooter);
 
-    var TEMPLATE = '<div class="row-fluid"' + 'ng-show="search.results.totalElements > 0">' + '<div class="span6">' + '<div class="dataTables_info">' + '{{\'SEARCH_RESULTS_CAPITALIZED\'| translate}} {{search.results.currentPageFrom}} {{\'SEARCH_TO\'| translate}} ' + '{{search.results.currentPageTo}} {{\'SEARCH_OF\'| translate}} {{search.results.totalElements}}' + '</div>' + '</div>' + '<div class="span6">' + '<uib-pagination' + 'boundary-links="true"' + 'items-per-page="configuration.maxPerPage"' + 'total-items="search.results.totalElements"' + 'ng-model="search.results.currentPage"' + 'ng-change="search.search()"' + 'class="pagination-sm"' + 'previous-text="&lsaquo;"' + 'next-text="&rsaquo;"' + 'first-text="&laquo;"' + 'last-text="&raquo;">' + '</uib-pagination>' + '</div>' + '</div>;';
+    var TEMPLATE = '<div class="row"' + 'ng-show="search.results.totalElements > 0">' + '<div class="col-sm-6">' + '<div class="dataTables_info">' + '{{\'SEARCH_RESULTS_CAPITALIZED\'| translate}} {{search.results.currentPageFrom}} {{\'SEARCH_TO\'| translate}} ' + '{{search.results.currentPageTo}} {{\'SEARCH_OF\'| translate}} {{search.results.totalElements}}' + '</div>' + '</div>' + '<div class="col-sm-6">' + '<uib-pagination ' + 'boundary-links="true" ' + 'items-per-page="search.configuration.maxPerPage" ' + 'total-items="search.results.totalElements" ' + 'ng-model="search.results.currentPage" ' + 'ng-change="search.search()" ' + 'class="pull-right pagination-sm" ' + 'previous-text="&lsaquo;" ' + 'next-text="&rsaquo;" ' + 'first-text="&laquo;" ' + 'last-text="&raquo;">' + '</uib-pagination>' + '</div>' + '</div>;';
 
     function sbSearchFooter() {
         return {
@@ -422,6 +425,9 @@
             replace: true,
             scope: {
                 search: '='
+            },
+            link: function (scope) {
+                console.log(scope.search);
             }
         };
     }
@@ -431,7 +437,7 @@
 
     angular.module('springbok.core').directive('sbSearchHeader', sbSearchHeader);
 
-    var TEMPLATE = '<div class="table-header"' + 'ng-show="search.searched">' + '{{search.results.totalElements}} {{\'SEARCH_RESULTS_LOWERCASE\' | translate}}' + '<div class="pull-right table-header-tools form-inline">' + '<label for="maxPerPage">{{\'SEARCH_MAXPERPAGE\' | translate}}</label>' + '<select id="maxPerPage"' + 'class="input-small"' + 'style="margin: 0 10px"' + 'ng-model="search.configuration.maxPerPage"' + 'ng-options="maxPerPage for maxPerPage in search.configuration.allMaxPerPage"' + 'ng-change="search.search()">' + '</select>' + '</div>' + '</div>';
+    var TEMPLATE = '<div class="table-header" style="margin-top: 1%"' + 'ng-show="search.searched">' + '{{search.results.totalElements}} {{\'SEARCH_RESULTS_LOWERCASE\' | translate}}' + '<div class="pull-right table-header-tools form-inline">' + '<label for="maxPerPage">{{\'SEARCH_MAXPERPAGE\' | translate}}</label>' + '<select id="maxPerPage"' + 'class="input-small"' + 'style="margin: 0 10px"' + 'ng-model="search.configuration.maxPerPage"' + 'ng-options="maxPerPage for maxPerPage in search.configuration.allMaxPerPage"' + 'ng-change="search.search()">' + '</select>' + '</div>' + '</div>';
 
     function sbSearchHeader() {
         return {

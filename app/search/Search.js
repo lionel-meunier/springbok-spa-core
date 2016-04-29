@@ -20,7 +20,7 @@
             this.results = {
                 content: [],
                 totalElements: 0,
-                currentPage: 0
+                currentPage: 1
             };
         };
 
@@ -32,6 +32,8 @@
             } else {
                 this.configuration.columns[columnName] = this.configuration.columns[columnName] === 'asc' ? 'desc' : 'asc';
             }
+            
+            this.configuration.currentDirection = this.configuration.columns[columnName];
 
             this.search();
         };
@@ -57,7 +59,7 @@
                     direction: self.configuration.columns[self.configuration.currentOrderBy],
                     properties: self.configuration.currentOrderBy,
                     pageSize: self.configuration.maxPerPage,
-                    pageNumber: self.results.currentPage
+                    pageNumber: self.results.currentPage - 1
                 }
             };
 
@@ -83,6 +85,7 @@
             $http.get(self.configuration.endpoint, config).then(function(searchData) {
                 if (searchData.status === 200) {
                     self.results = searchData.data;
+                    self.results.currentPage = config.params.pageNumber + 1;
                     self.searched = true;
                     pagination.extendsPagedDataWithWalker(self.results);
                 }

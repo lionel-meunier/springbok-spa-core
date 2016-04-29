@@ -3,7 +3,7 @@
 
     angular.module('springbok.core').directive('sbSearchHeader', sbSearchHeader);
     
-    var TEMPLATE = '<div class="table-header"' +  
+    var TEMPLATE = '<div class="table-header" style="margin-top: 1%"' +  
                         'ng-show="search.searched">' +
                        '{{search.results.totalElements}} {{\'SEARCH_RESULTS_LOWERCASE\' | translate}}' +
                        '<div class="pull-right table-header-tools form-inline">' +
