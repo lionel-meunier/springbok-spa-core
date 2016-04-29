@@ -31,7 +31,7 @@
                     $rootScope.$broadcast('http-error-404');
                 }
                 
-                return response;
+                return $q.reject(response);
             }
         };
     }
