@@ -9,6 +9,10 @@
     function httpInterceptor($rootScope, $q) {
         return {
             request: function (config) {
+                if (sessionStorage.token) {
+                    config.headers['Authorization'] = sessionStorage.token;
+                }
+                
                 $rootScope.$broadcast('showSpinner');
                 return config || $q.when(config);
             },
