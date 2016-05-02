@@ -4,13 +4,17 @@
     
     angular.module('springbok.core').factory('httpInterceptor', httpInterceptor);
     
-    httpInterceptor.$inject = ['$rootScope', '$q'];
+    httpInterceptor.$inject = ['$rootScope', '$q', 'session'];
     
-    function httpInterceptor($rootScope, $q) {
+    function httpInterceptor($rootScope, $q, session) {
         return {
             request: function (config) {
-                if (sessionStorage.token) {
-                    config.headers['Authorization'] = sessionStorage.token;
+                var account = session.getCurrent();
+                
+                console.log('httpInter : session.account', account);
+                
+                if (account.token) {
+                    config.headers['Authorization'] = account.token;
                 }
                 
                 $rootScope.$broadcast('showSpinner');
