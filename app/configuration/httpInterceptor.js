@@ -11,8 +11,6 @@
             request: function (config) {
                 var account = session.getCurrent();
                 
-                console.log('httpInter : session.account', account);
-                
                 if (account.token) {
                     config.headers['Authorization'] = account.token;
                 }
