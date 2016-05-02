@@ -35,9 +35,6 @@
             replace: true,
             scope: {
                 search: '='
-            },
-            link: function(scope) {
-                console.log(scope.search);
             }
         };
     }
