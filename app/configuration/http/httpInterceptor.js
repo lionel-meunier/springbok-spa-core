@@ -17,6 +17,8 @@
                     $rootScope.$broadcast('http-error-401');
                 }
                 
+                config.headers['Accept-Language'] = session.language.substring(0, 2);
+                
                 $rootScope.$broadcast('showSpinner');
                 return config || $q.when(config);
             },

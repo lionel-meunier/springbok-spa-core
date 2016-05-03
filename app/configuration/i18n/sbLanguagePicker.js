@@ -8,7 +8,7 @@
                         '<a data-toggle="dropdown" class="dropdown-toggle pointer" aria-expanded="false"> ' +
                             '<span class="user-info"> ' +
                                 '<small>{{ \'I18N_LANGUAGE\' | translate}}</small> ' +
-                                '{{i18n.get(authentication.session.account.language).i18nKey | translate}} ' +
+                                '{{i18n.get(authentication.session.language).i18nKey | translate}} ' +
                             '</span> ' +
                             '<i class="ace-icon fa fa-caret-down"></i> ' +
                         '</a> ' +

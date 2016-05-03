@@ -10,8 +10,6 @@
         
         i18n.languages = languages.list;
         
-        session.setLanguage(CONFIG.app.preferredLanguage);
-        
         i18n.change = function(languageKey) {
             if (languages.has(languageKey)) {
                 $translate.use(languageKey);
@@ -22,6 +20,8 @@
         i18n.get = function(languageKey) {
             return languages.get(languageKey);
         };
+        
+        i18n.change(session.language);
     }
 })();
 
