@@ -11,8 +11,10 @@
             request: function (config) {
                 var account = session.getCurrent();
                 
-                if (account.token) {
+                if (account.token && !session.isExpired()) {
                     config.headers['Authorization'] = account.token;
+                } else {
+                    $rootScope.$broadcast('http-error-401');
                 }
                 
                 $rootScope.$broadcast('showSpinner');
@@ -24,6 +26,7 @@
             },
             response: function (response) {
                 $rootScope.$broadcast('hideSpinner');
+                
                 return response || $q.when(response);
             },
             responseError: function (response) {

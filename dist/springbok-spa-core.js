@@ -12,82 +12,6 @@
 (function () {
     'use strict';
 
-    angular.module('springbok.core').factory('httpInterceptor', httpInterceptor);
-
-    httpInterceptor.$inject = ['$rootScope', '$q', 'session'];
-
-    function httpInterceptor($rootScope, $q, session) {
-        return {
-            request: function (config) {
-                var account = session.getCurrent();
-
-                if (account.token) {
-                    config.headers['Authorization'] = account.token;
-                }
-
-                $rootScope.$broadcast('showSpinner');
-                return config || $q.when(config);
-            },
-            requestError: function (rejection) {
-                $rootScope.$broadcast('showSpinner');
-                return $q.reject(rejection);
-            },
-            response: function (response) {
-                $rootScope.$broadcast('hideSpinner');
-                return response || $q.when(response);
-            },
-            responseError: function (response) {
-                $rootScope.$broadcast('hideSpinner');
-
-                if (response.status === 401) {
-                    $rootScope.$broadcast('http-error-401');
-                } else if (response.status === 403) {
-                    $rootScope.$broadcast('http-error-403');
-                } else if (response.status === 404) {
-                    $rootScope.$broadcast('http-error-404');
-                }
-
-                return $q.reject(response);
-            }
-        };
-    }
-
-    angular.module('springbok.core').config(['$httpProvider', function ($httpProvider) {
-        $httpProvider.interceptors.push('httpInterceptor');
-    }]);
-})();
-(function () {
-    'use strict';
-
-    angular.module('springbok.core').config(Logging);
-
-    Logging.$inject = ['$logProvider'];
-
-    function Logging($logProvider) {
-        $logProvider.debugEnabled(CONFIG.app.logDebugEnabled);
-    }
-})();
-(function () {
-    'use strict';
-
-    angular.module('springbok.core').config(Translation);
-
-    Translation.$inject = ['$translateProvider'];
-
-    function Translation($translateProvider) {
-        $translateProvider.useStaticFilesLoader({
-            prefix: '/i18n/',
-            suffix: '.json'
-        });
-
-        $translateProvider.preferredLanguage(CONFIG.app.preferredLanguage);
-        $translateProvider.useMissingTranslationHandlerLog();
-        $translateProvider.useSanitizeValueStrategy(null);
-    }
-})();
-(function () {
-    'use strict';
-
     angular.module('springbok.core').service('enums', enums);
 
     enums.$inject = ['$http', '$q', '$log', 'endpoints'];
@@ -141,6 +65,85 @@
             var data = this.getData(enumName);
             return _.findWhere(data, { value: valueSearch });
         };
+    }
+})();
+(function () {
+    'use strict';
+
+    angular.module('springbok.core').factory('httpInterceptor', httpInterceptor);
+
+    httpInterceptor.$inject = ['$rootScope', '$q', 'session'];
+
+    function httpInterceptor($rootScope, $q, session) {
+        return {
+            request: function (config) {
+                var account = session.getCurrent();
+
+                if (account.token && !session.isExpired()) {
+                    config.headers['Authorization'] = account.token;
+                } else {
+                    $rootScope.$broadcast('http-error-401');
+                }
+
+                $rootScope.$broadcast('showSpinner');
+                return config || $q.when(config);
+            },
+            requestError: function (rejection) {
+                $rootScope.$broadcast('showSpinner');
+                return $q.reject(rejection);
+            },
+            response: function (response) {
+                $rootScope.$broadcast('hideSpinner');
+
+                return response || $q.when(response);
+            },
+            responseError: function (response) {
+                $rootScope.$broadcast('hideSpinner');
+
+                if (response.status === 401) {
+                    $rootScope.$broadcast('http-error-401');
+                } else if (response.status === 403) {
+                    $rootScope.$broadcast('http-error-403');
+                } else if (response.status === 404) {
+                    $rootScope.$broadcast('http-error-404');
+                }
+
+                return $q.reject(response);
+            }
+        };
+    }
+
+    angular.module('springbok.core').config(['$httpProvider', function ($httpProvider) {
+        $httpProvider.interceptors.push('httpInterceptor');
+    }]);
+})();
+(function () {
+    'use strict';
+
+    angular.module('springbok.core').config(Logging);
+
+    Logging.$inject = ['$logProvider'];
+
+    function Logging($logProvider) {
+        $logProvider.debugEnabled(CONFIG.app.logDebugEnabled);
+    }
+})();
+(function () {
+    'use strict';
+
+    angular.module('springbok.core').config(Translation);
+
+    Translation.$inject = ['$translateProvider'];
+
+    function Translation($translateProvider) {
+        $translateProvider.useStaticFilesLoader({
+            prefix: '/i18n/',
+            suffix: '.json'
+        });
+
+        $translateProvider.preferredLanguage(CONFIG.app.preferredLanguage);
+        $translateProvider.useMissingTranslationHandlerLog();
+        $translateProvider.useSanitizeValueStrategy(null);
     }
 })();
 (function () {
@@ -520,21 +523,6 @@
 (function () {
     'use strict';
 
-    angular.module('springbok.core').filter('statusKey', statusKey);
-
-    function statusKey() {
-        return function (status) {
-            if (_.isNull && _.isUndefined && status === true) {
-                return 'GLOBAL_ACTIVATED';
-            } else {
-                return 'GLOBAL_DEACTIVATED';
-            }
-        };
-    }
-})();
-(function () {
-    'use strict';
-
     angular.module('springbok.core').service('encryptionUtils', encryptionUtils);
 
     function encryptionUtils() {
@@ -578,6 +566,21 @@
             });
 
             return processedUrl;
+        };
+    }
+})();
+(function () {
+    'use strict';
+
+    angular.module('springbok.core').filter('statusKey', statusKey);
+
+    function statusKey() {
+        return function (status) {
+            if (_.isNull && _.isUndefined && status === true) {
+                return 'GLOBAL_ACTIVATED';
+            } else {
+                return 'GLOBAL_DEACTIVATED';
+            }
         };
     }
 })();
