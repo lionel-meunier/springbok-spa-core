@@ -70,85 +70,6 @@
 (function () {
     'use strict';
 
-    angular.module('springbok.core').factory('httpInterceptor', httpInterceptor);
-
-    httpInterceptor.$inject = ['$rootScope', '$q', 'session'];
-
-    function httpInterceptor($rootScope, $q, session) {
-        return {
-            request: function (config) {
-                var account = session.getCurrent();
-
-                if (account.token && !session.isExpired()) {
-                    config.headers['Authorization'] = account.token;
-                } else {
-                    $rootScope.$broadcast('http-error-401');
-                }
-
-                $rootScope.$broadcast('showSpinner');
-                return config || $q.when(config);
-            },
-            requestError: function (rejection) {
-                $rootScope.$broadcast('showSpinner');
-                return $q.reject(rejection);
-            },
-            response: function (response) {
-                $rootScope.$broadcast('hideSpinner');
-
-                return response || $q.when(response);
-            },
-            responseError: function (response) {
-                $rootScope.$broadcast('hideSpinner');
-
-                if (response.status === 401) {
-                    $rootScope.$broadcast('http-error-401');
-                } else if (response.status === 403) {
-                    $rootScope.$broadcast('http-error-403');
-                } else if (response.status === 404) {
-                    $rootScope.$broadcast('http-error-404');
-                }
-
-                return $q.reject(response);
-            }
-        };
-    }
-
-    angular.module('springbok.core').config(['$httpProvider', function ($httpProvider) {
-        $httpProvider.interceptors.push('httpInterceptor');
-    }]);
-})();
-(function () {
-    'use strict';
-
-    angular.module('springbok.core').config(Logging);
-
-    Logging.$inject = ['$logProvider'];
-
-    function Logging($logProvider) {
-        $logProvider.debugEnabled(CONFIG.app.logDebugEnabled);
-    }
-})();
-(function () {
-    'use strict';
-
-    angular.module('springbok.core').config(Translation);
-
-    Translation.$inject = ['$translateProvider'];
-
-    function Translation($translateProvider) {
-        $translateProvider.useStaticFilesLoader({
-            prefix: '/i18n/',
-            suffix: '.json'
-        });
-
-        $translateProvider.preferredLanguage(CONFIG.app.preferredLanguage);
-        $translateProvider.useMissingTranslationHandlerLog();
-        $translateProvider.useSanitizeValueStrategy(null);
-    }
-})();
-(function () {
-    'use strict';
-
     angular.module('springbok.core').service('endpoints', endpoints);
 
     endpoints.$inject = ['$log', 'urlUtils'];
@@ -523,6 +444,21 @@
 (function () {
     'use strict';
 
+    angular.module('springbok.core').filter('statusKey', statusKey);
+
+    function statusKey() {
+        return function (status) {
+            if (_.isNull && _.isUndefined && status === true) {
+                return 'GLOBAL_ACTIVATED';
+            } else {
+                return 'GLOBAL_DEACTIVATED';
+            }
+        };
+    }
+})();
+(function () {
+    'use strict';
+
     angular.module('springbok.core').service('encryptionUtils', encryptionUtils);
 
     function encryptionUtils() {
@@ -572,16 +508,149 @@
 (function () {
     'use strict';
 
-    angular.module('springbok.core').filter('statusKey', statusKey);
+    angular.module('springbok.core').factory('httpInterceptor', httpInterceptor);
 
-    function statusKey() {
-        return function (status) {
-            if (_.isNull && _.isUndefined && status === true) {
-                return 'GLOBAL_ACTIVATED';
-            } else {
-                return 'GLOBAL_DEACTIVATED';
+    httpInterceptor.$inject = ['$rootScope', '$q', 'session'];
+
+    function httpInterceptor($rootScope, $q, session) {
+        return {
+            request: function (config) {
+                var account = session.getCurrent();
+
+                if (account.token && !session.isExpired()) {
+                    config.headers['Authorization'] = account.token;
+                } else {
+                    $rootScope.$broadcast('http-error-401');
+                }
+
+                $rootScope.$broadcast('showSpinner');
+                return config || $q.when(config);
+            },
+            requestError: function (rejection) {
+                $rootScope.$broadcast('showSpinner');
+                return $q.reject(rejection);
+            },
+            response: function (response) {
+                $rootScope.$broadcast('hideSpinner');
+
+                return response || $q.when(response);
+            },
+            responseError: function (response) {
+                $rootScope.$broadcast('hideSpinner');
+
+                if (response.status === 401) {
+                    $rootScope.$broadcast('http-error-401');
+                } else if (response.status === 403) {
+                    $rootScope.$broadcast('http-error-403');
+                } else if (response.status === 404) {
+                    $rootScope.$broadcast('http-error-404');
+                }
+
+                return $q.reject(response);
             }
         };
+    }
+
+    angular.module('springbok.core').config(['$httpProvider', function ($httpProvider) {
+        $httpProvider.interceptors.push('httpInterceptor');
+    }]);
+})();
+(function () {
+    'use strict';
+
+    angular.module('springbok.core').controller('i18nController', i18nController);
+
+    i18nController.$inject = ['$translate', 'languages', 'session'];
+
+    function i18nController($translate, languages, session) {
+        var i18n = this;
+
+        i18n.languages = languages.list;
+
+        session.setLanguage(CONFIG.app.preferredLanguage);
+
+        i18n.change = function (languageKey) {
+            if (languages.has(languageKey)) {
+                $translate.use(languageKey);
+                session.setLanguage(languageKey);
+            }
+        };
+
+        i18n.get = function (languageKey) {
+            return languages.get(languageKey);
+        };
+    }
+})();
+(function () {
+    'use strict';
+
+    angular.module('springbok.core').service('languages', languages);
+
+    function languages() {
+        var languages = this;
+
+        languages.list = [{ key: 'fr_FR', i18nKey: 'I18N_FRENCH' }];
+
+        languages.add = function (languageKey, languageI18nKey) {
+            languages.list.push({ key: languageKey, i18nKey: languageI18nKey });
+        };
+
+        languages.get = function (languageKey) {
+            return _.findWhere(languages.list, { key: languageKey });
+        };
+
+        languages.has = function (languageKey) {
+            return !_.isUndefined(languages.get(languageKey));
+        };
+
+        languages.clear = function () {
+            languages.list = [];
+        };
+    }
+})();
+(function () {
+    'use strict';
+
+    angular.module('springbok.core').directive('sbLanguagePicker', sbLanguagePicker);
+
+    var TEMPLATE = '<li class="green" ' + 'ng-controller="i18nController as i18n"> ' + '<a data-toggle="dropdown" class="dropdown-toggle pointer" aria-expanded="false"> ' + '<span class="user-info"> ' + '<small>{{ \'I18N_LANGUAGE\' | translate}}</small> ' + '{{i18n.get(authentication.session.account.language).i18nKey | translate}} ' + '</span> ' + '<i class="ace-icon fa fa-caret-down"></i> ' + '</a> ' + '<ul class="user-menu dropdown-menu-right dropdown-menu dropdown-yellow dropdown-caret dropdown-close"> ' + '<li ng-repeat="language in i18n.languages"> ' + '<a class="pointer" ng-click="i18n.change(language.key)"> ' + '<img width="15" ng-src="assets/images/i18n/{{language.key}}.png" alt="{{language.i18nKey | translate}} flag"/> ' + '{{language.i18nKey | translate }} ' + '</a> ' + '</li> ' + '</ul> ' + '</li>';
+
+    function sbLanguagePicker() {
+        return {
+            restrict: 'E',
+            template: TEMPLATE,
+            transclude: true,
+            replace: true
+        };
+    }
+})();
+(function () {
+    'use strict';
+
+    angular.module('springbok.core').config(Translation);
+
+    Translation.$inject = ['$translateProvider'];
+
+    function Translation($translateProvider) {
+        $translateProvider.useStaticFilesLoader({
+            prefix: '/i18n/',
+            suffix: '.json'
+        });
+
+        $translateProvider.preferredLanguage(CONFIG.app.preferredLanguage);
+        $translateProvider.useMissingTranslationHandlerLog();
+        $translateProvider.useSanitizeValueStrategy(null);
+    }
+})();
+(function () {
+    'use strict';
+
+    angular.module('springbok.core').config(Logging);
+
+    Logging.$inject = ['$logProvider'];
+
+    function Logging($logProvider) {
+        $logProvider.debugEnabled(CONFIG.app.logDebugEnabled);
     }
 })();
 (function () {
