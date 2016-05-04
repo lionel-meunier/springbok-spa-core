@@ -4,9 +4,9 @@
     
     angular.module('springbok.core').factory('httpInterceptor', httpInterceptor);
     
-    httpInterceptor.$inject = ['$rootScope', '$q', 'session'];
+    httpInterceptor.$inject = ['$rootScope', '$q', '$location', 'session'];
     
-    function httpInterceptor($rootScope, $q, session) {
+    function httpInterceptor($rootScope, $q, $location, session) {
         return {
             request: function (config) {
                 var account = session.getCurrent();
@@ -37,6 +37,8 @@
                 
                 if (response.status === 401) {
                     $rootScope.$broadcast('http-error-401');
+                    session.clear();
+                    $location.path('/');
                 } else if (response.status === 403) {
                     $rootScope.$broadcast('http-error-403');
                 } else if (response.status === 404) {
