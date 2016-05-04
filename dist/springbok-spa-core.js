@@ -194,6 +194,9 @@
     Search.$inject = ['$log', '$q', '$http', 'pagination', 'searchCriterias'];
 
     function Search($log, $q, $http, pagination, searchCriterias) {
+
+        const DIRECTION_ASC = 'asc';
+        const DIRECTION_DESC = 'desc';
         const DEFAULT_DIRECTION = 'asc';
 
         var Search = function (searchConfiguration) {
@@ -214,16 +217,26 @@
 
         Search.prototype.orderBy = function (columnName, direction) {
             this.configuration.currentOrderBy = columnName;
+            this.setDirectionFor(columnName, direction);
+            this.configuration.currentDirection = this.configuration.columns[columnName];
+
+            this.search();
+        };
+
+        Search.prototype.setDirectionFor = function (columnName, direction) {
+            var self = this;
 
             if (!_.isNull(direction) && !_.isUndefined(direction)) {
                 this.configuration.columns[columnName] = direction;
             } else {
-                this.configuration.columns[columnName] = this.configuration.columns[columnName] === 'asc' ? 'desc' : 'asc';
+                this.configuration.columns[columnName] = this.configuration.columns[columnName] === DIRECTION_ASC ? DIRECTION_DESC : DIRECTION_ASC;
             }
 
-            this.configuration.currentDirection = this.configuration.columns[columnName];
-
-            this.search();
+            Object.keys(this.configuration.columns, function (columnKey) {
+                if (columnKey !== columnName) {
+                    self.configuration.columns[columnKey] = DEFAULT_DIRECTION;
+                }
+            });
         };
 
         Search.prototype.maxPerPage = function (maxPerPage) {
@@ -242,13 +255,23 @@
                 self.results.currentPage = pageNumber;
             }
 
+            var config = this.buildCriterias();
+
+            if (!_.isNull(self.configuration.criteriasKey) && !_.isUndefined(self.configuration.criteriasKey)) {
+                searchCriterias.set(self.configuration.criteriasKey, config.params);
+            }
+
+            $log.debug('Config', config);
+            $log.debug('Search configuration for ' + this.configuration.criteriasKey, this.configuration);
+
+            return this.fetch(config);
+        };
+
+        Search.prototype.buildCriterias = function () {
+            var self = this;
+
             var config = {
-                params: {
-                    direction: self.configuration.columns[self.configuration.currentOrderBy],
-                    properties: self.configuration.currentOrderBy,
-                    pageSize: self.configuration.maxPerPage,
-                    pageNumber: self.results.currentPage - 1
-                }
+                params: {}
             };
 
             if (!_.isUndefined(self.configuration.form)) {
@@ -257,13 +280,34 @@
                 });
             }
 
-            if (!_.isNull(self.configuration.criteriasKey) && !_.isUndefined(self.configuration.criteriasKey)) {
-                searchCriterias.set(self.configuration.criteriasKey, config.params);
+            if (!self.configuration.form.direction) {
+                config.params.direction = self.configuration.currentDirection;
             }
 
-            $log.debug('Search configuration for ' + this.configuration.criteriasKey, this.configuration);
+            if (!self.configuration.form.properties) {
+                config.params.properties = self.configuration.currentOrderBy;
+            }
 
-            return this.fetch(config);
+            if (!self.configuration.form.pageSize) {
+                config.params.pageSize = self.configuration.maxPerPage;
+            } else {
+                self.configuration.maxPerPage = self.configuration.form.pageSize;
+            }
+
+            if (!self.configuration.form.pageNumber) {
+                config.params.pageNumber = self.results.currentPage - 1;
+            }
+
+            self.configuration.columns[config.params.properties] = config.params.direction;
+
+            this.setDirectionFor(config.params.properties, config.params.direction);
+
+            delete self.configuration.form.direction;
+            delete self.configuration.form.properties;
+            delete self.configuration.form.pageSize;
+            delete self.configuration.form.pageNumber;
+
+            return config;
         };
 
         Search.prototype.fetch = function (config) {
@@ -459,6 +503,55 @@
 (function () {
     'use strict';
 
+    angular.module('springbok.core').service('encryptionUtils', encryptionUtils);
+
+    function encryptionUtils() {
+        this.encodeToBase64 = function (stringToEncode) {
+            return window.btoa(unescape(encodeURIComponent(stringToEncode)));
+        };
+    }
+})();
+(function () {
+    'use strict';
+
+    angular.module('springbok.core').service('urlUtils', urlUtils);
+
+    function urlUtils() {
+        this.addSlashAtTheEndIfNotPresent = function (url) {
+            if (!s.isBlank(url)) {
+                var lastIndexOfSlash = url.lastIndexOf('/');
+                var lastCharacterIsASlash = lastIndexOfSlash === url.length - 1;
+
+                if (!lastCharacterIsASlash) {
+                    url += '/';
+                }
+            }
+
+            return url;
+        };
+
+        this.processUrlWithPathVariables = function (url, pathVariables, pathVariableCharacter) {
+            var processedUrl = url,
+                paramMatch;
+
+            if (_.isUndefined(pathVariables) || !_.isObject(pathVariables)) {
+                return processedUrl;
+            }
+
+            _.each(_.keys(pathVariables), function (key) {
+                paramMatch = pathVariableCharacter + key;
+                if (s.include(url, paramMatch)) {
+                    processedUrl = processedUrl.replace(paramMatch, pathVariables[key]);
+                }
+            });
+
+            return processedUrl;
+        };
+    }
+})();
+(function () {
+    'use strict';
+
     angular.module('springbok.core').factory('httpInterceptor', httpInterceptor);
 
     httpInterceptor.$inject = ['$rootScope', '$q', 'session'];
@@ -617,55 +710,6 @@
                 authenticated: false
             };
         }
-    }
-})();
-(function () {
-    'use strict';
-
-    angular.module('springbok.core').service('encryptionUtils', encryptionUtils);
-
-    function encryptionUtils() {
-        this.encodeToBase64 = function (stringToEncode) {
-            return window.btoa(unescape(encodeURIComponent(stringToEncode)));
-        };
-    }
-})();
-(function () {
-    'use strict';
-
-    angular.module('springbok.core').service('urlUtils', urlUtils);
-
-    function urlUtils() {
-        this.addSlashAtTheEndIfNotPresent = function (url) {
-            if (!s.isBlank(url)) {
-                var lastIndexOfSlash = url.lastIndexOf('/');
-                var lastCharacterIsASlash = lastIndexOfSlash === url.length - 1;
-
-                if (!lastCharacterIsASlash) {
-                    url += '/';
-                }
-            }
-
-            return url;
-        };
-
-        this.processUrlWithPathVariables = function (url, pathVariables, pathVariableCharacter) {
-            var processedUrl = url,
-                paramMatch;
-
-            if (_.isUndefined(pathVariables) || !_.isObject(pathVariables)) {
-                return processedUrl;
-            }
-
-            _.each(_.keys(pathVariables), function (key) {
-                paramMatch = pathVariableCharacter + key;
-                if (s.include(url, paramMatch)) {
-                    processedUrl = processedUrl.replace(paramMatch, pathVariables[key]);
-                }
-            });
-
-            return processedUrl;
-        };
     }
 })();
 (function () {

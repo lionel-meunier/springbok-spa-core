@@ -6,6 +6,9 @@
     Search.$inject = ['$log', '$q', '$http', 'pagination', 'searchCriterias'];
     
     function Search($log, $q, $http, pagination, searchCriterias) {
+        
+        const DIRECTION_ASC = 'asc';
+        const DIRECTION_DESC = 'desc';
         const DEFAULT_DIRECTION = 'asc';
 
         var Search = function(searchConfiguration) {
@@ -26,16 +29,26 @@
 
         Search.prototype.orderBy = function (columnName, direction) {
             this.configuration.currentOrderBy = columnName;
-
-            if (!_.isNull(direction) && !_.isUndefined(direction)){
-                this.configuration.columns[columnName] = direction;
-            } else {
-                this.configuration.columns[columnName] = this.configuration.columns[columnName] === 'asc' ? 'desc' : 'asc';
-            }
-            
+            this.setDirectionFor(columnName, direction);
             this.configuration.currentDirection = this.configuration.columns[columnName];
 
             this.search();
+        };
+        
+        Search.prototype.setDirectionFor = function(columnName, direction) {
+            var self = this;
+            
+            if (!_.isNull(direction) && !_.isUndefined(direction)){
+                this.configuration.columns[columnName] = direction;
+            } else {
+                this.configuration.columns[columnName] = this.configuration.columns[columnName] === DIRECTION_ASC ? DIRECTION_DESC : DIRECTION_ASC;
+            }
+            
+            Object.keys(this.configuration.columns, function(columnKey) {
+                if (columnKey !== columnName) {
+                    self.configuration.columns[columnKey] = DEFAULT_DIRECTION;
+                }
+            });
         };
 
         Search.prototype.maxPerPage = function(maxPerPage) {
@@ -54,28 +67,59 @@
                 self.results.currentPage = pageNumber;
             }
             
-            var config = {
-                params: {
-                    direction: self.configuration.columns[self.configuration.currentOrderBy],
-                    properties: self.configuration.currentOrderBy,
-                    pageSize: self.configuration.maxPerPage,
-                    pageNumber: self.results.currentPage - 1
-                }
-            };
+            var config = this.buildCriterias();
+            
+            if (!_.isNull(self.configuration.criteriasKey) && !_.isUndefined(self.configuration.criteriasKey)) {
+                searchCriterias.set(self.configuration.criteriasKey, config.params);
+            }
 
+            $log.debug('Config', config);
+            $log.debug('Search configuration for ' + this.configuration.criteriasKey, this.configuration);
+
+            return this.fetch(config);
+        };
+
+        Search.prototype.buildCriterias = function() {
+            var self = this;
+            
+            var config = {
+                params: {}
+            };
+            
             if (!_.isUndefined(self.configuration.form)) {
                 Object.keys(self.configuration.form).forEach(function(formField) {
                     config.params[formField] = _.isUndefined(self.configuration.form[formField]) ? null : self.configuration.form[formField];
                 });
             }
-
-            if (!_.isNull(self.configuration.criteriasKey) && !_.isUndefined(self.configuration.criteriasKey)) {
-                searchCriterias.set(self.configuration.criteriasKey, config.params);
+            
+            if (!self.configuration.form.direction) {
+                config.params.direction = self.configuration.currentDirection;
             }
-
-            $log.debug('Search configuration for ' + this.configuration.criteriasKey, this.configuration);
-
-            return this.fetch(config);
+            
+            if (!self.configuration.form.properties) {
+                config.params.properties = self.configuration.currentOrderBy;
+            }
+            
+            if (!self.configuration.form.pageSize) {
+                config.params.pageSize = self.configuration.maxPerPage;
+            } else {
+                self.configuration.maxPerPage = self.configuration.form.pageSize;
+            }
+            
+            if (!self.configuration.form.pageNumber) {
+                config.params.pageNumber = self.results.currentPage - 1;
+            }
+            
+            self.configuration.columns[config.params.properties] = config.params.direction;
+            
+            this.setDirectionFor(config.params.properties, config.params.direction);
+            
+            delete self.configuration.form.direction;
+            delete self.configuration.form.properties;
+            delete self.configuration.form.pageSize;
+            delete self.configuration.form.pageNumber;
+            
+            return config;
         };
 
         Search.prototype.fetch = function(config) {
