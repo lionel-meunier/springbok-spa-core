@@ -261,7 +261,6 @@
                 searchCriterias.set(self.configuration.criteriasKey, config.params);
             }
 
-            $log.debug('Config', config);
             $log.debug('Search configuration for ' + this.configuration.criteriasKey, this.configuration);
 
             return this.fetch(config);
@@ -282,30 +281,34 @@
 
             if (!self.configuration.form.direction) {
                 config.params.direction = self.configuration.currentDirection;
+            } else {
+                self.configuration.currentDirection = self.configuration.form.direction;
+                delete self.configuration.form.direction;
             }
 
             if (!self.configuration.form.properties) {
                 config.params.properties = self.configuration.currentOrderBy;
+            } else {
+                self.configuration.currentOrderBy = self.configuration.form.properties;
+                delete self.configuration.form.properties;
             }
 
             if (!self.configuration.form.pageSize) {
                 config.params.pageSize = self.configuration.maxPerPage;
             } else {
                 self.configuration.maxPerPage = self.configuration.form.pageSize;
+                delete self.configuration.form.pageSize;
             }
 
             if (!self.configuration.form.pageNumber) {
                 config.params.pageNumber = self.results.currentPage - 1;
+            } else {
+                delete self.configuration.form.pageNumber;
             }
 
             self.configuration.columns[config.params.properties] = config.params.direction;
 
             this.setDirectionFor(config.params.properties, config.params.direction);
-
-            delete self.configuration.form.direction;
-            delete self.configuration.form.properties;
-            delete self.configuration.form.pageSize;
-            delete self.configuration.form.pageNumber;
 
             return config;
         };
