@@ -13,6 +13,7 @@
                 
                 if (account.token && !session.isExpired()) {
                     config.headers['Authorization'] = account.token;
+                    session.updateExpiration();
                 } else {
                     $rootScope.$broadcast('http-error-401');
                 }

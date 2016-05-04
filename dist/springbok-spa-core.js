@@ -459,6 +459,169 @@
 (function () {
     'use strict';
 
+    angular.module('springbok.core').factory('httpInterceptor', httpInterceptor);
+
+    httpInterceptor.$inject = ['$rootScope', '$q', 'session'];
+
+    function httpInterceptor($rootScope, $q, session) {
+        return {
+            request: function (config) {
+                var account = session.getCurrent();
+
+                if (account.token && !session.isExpired()) {
+                    config.headers['Authorization'] = account.token;
+                    session.updateExpiration();
+                } else {
+                    $rootScope.$broadcast('http-error-401');
+                }
+
+                config.headers['Accept-Language'] = session.language.substring(0, 2);
+
+                $rootScope.$broadcast('showSpinner');
+                return config || $q.when(config);
+            },
+            requestError: function (rejection) {
+                $rootScope.$broadcast('showSpinner');
+                return $q.reject(rejection);
+            },
+            response: function (response) {
+                $rootScope.$broadcast('hideSpinner');
+
+                return response || $q.when(response);
+            },
+            responseError: function (response) {
+                $rootScope.$broadcast('hideSpinner');
+
+                if (response.status === 401) {
+                    $rootScope.$broadcast('http-error-401');
+                } else if (response.status === 403) {
+                    $rootScope.$broadcast('http-error-403');
+                } else if (response.status === 404) {
+                    $rootScope.$broadcast('http-error-404');
+                }
+
+                return $q.reject(response);
+            }
+        };
+    }
+
+    angular.module('springbok.core').config(['$httpProvider', function ($httpProvider) {
+        $httpProvider.interceptors.push('httpInterceptor');
+    }]);
+})();
+(function () {
+    'use strict';
+
+    angular.module('springbok.core').service('session', session);
+
+    session.$inject = ['encryptionUtils'];
+
+    function session(encryptionUtils) {
+        var session = this;
+
+        session.defaultExpirationDurationInMilliseconds = 1 * 3600 * 1000; // 1 hour
+        session.account = {};
+
+        getCurrent();
+
+        session.persist = function () {
+            localStorage.account = JSON.stringify(session.account);
+        };
+
+        session.update = function (account) {
+            session.account.infos = account;
+            session.account.authenticated = true;
+            session.persist();
+        };
+
+        session.isExpired = function () {
+            var isExpired = true;
+            var currentDateTime = new Date().getTime();
+            var sessionDateTime = session.account.expiration;
+
+            if (!_.isNull(sessionDateTime) && !_.isUndefined(sessionDateTime)) {
+                var dateTimeDifference = currentDateTime - sessionDateTime;
+                isExpired = dateTimeDifference >= session.defaultExpirationDurationInMilliseconds;
+            }
+
+            return isExpired;
+        };
+
+        session.updateExpiration = updateExpiration;
+
+        session.clear = function () {
+            init();
+            localStorage.removeItem('account');
+        };
+
+        session.getCurrent = getCurrent;
+
+        session.setTokenAndExpiration = function () {
+            var authorizationheader = 'Basic ';
+            authorizationheader += encryptionUtils.encodeToBase64(session.account.username + ':' + session.account.password);
+
+            session.account.token = authorizationheader;
+            updateExpiration();
+            session.persist();
+        };
+
+        session.setDefaultExpirationDurationInMilliseconds = function (defaultExpirationDurationInMilliseconds) {
+            session.defaultExpirationDurationInMilliseconds = defaultExpirationDurationInMilliseconds;
+        };
+
+        session.setLanguage = function (languageKey) {
+            session.language = languageKey;
+            localStorage.language = session.language;
+        };
+
+        session.updateLanguage = updateLanguage();
+
+        function getCurrent() {
+            if (localStorage.account) {
+                var account = JSON.parse(localStorage.account);
+                session.account = account;
+            } else {
+                init();
+            }
+
+            updateLanguage();
+
+            return session.account;
+        }
+
+        function updateLanguage() {
+            var language = CONFIG.app.preferredLanguage;
+
+            if (localStorage.language) {
+                language = localStorage.language;
+            }
+
+            session.language = language;
+        }
+
+        function updateExpiration() {
+            session.account.expiration = new Date().getTime();
+            session.persist();
+        }
+
+        /**
+         * Clear all account data except for the language if one has been selected
+         * @returns {void}
+         */
+        function init() {
+            session.account = {
+                infos: {},
+                username: '',
+                password: '',
+                expiration: null,
+                authenticated: false
+            };
+        }
+    }
+})();
+(function () {
+    'use strict';
+
     angular.module('springbok.core').service('encryptionUtils', encryptionUtils);
 
     function encryptionUtils() {
@@ -504,58 +667,6 @@
             return processedUrl;
         };
     }
-})();
-(function () {
-    'use strict';
-
-    angular.module('springbok.core').factory('httpInterceptor', httpInterceptor);
-
-    httpInterceptor.$inject = ['$rootScope', '$q', 'session'];
-
-    function httpInterceptor($rootScope, $q, session) {
-        return {
-            request: function (config) {
-                var account = session.getCurrent();
-
-                if (account.token && !session.isExpired()) {
-                    config.headers['Authorization'] = account.token;
-                } else {
-                    $rootScope.$broadcast('http-error-401');
-                }
-
-                config.headers['Accept-Language'] = session.language.substring(0, 2);
-
-                $rootScope.$broadcast('showSpinner');
-                return config || $q.when(config);
-            },
-            requestError: function (rejection) {
-                $rootScope.$broadcast('showSpinner');
-                return $q.reject(rejection);
-            },
-            response: function (response) {
-                $rootScope.$broadcast('hideSpinner');
-
-                return response || $q.when(response);
-            },
-            responseError: function (response) {
-                $rootScope.$broadcast('hideSpinner');
-
-                if (response.status === 401) {
-                    $rootScope.$broadcast('http-error-401');
-                } else if (response.status === 403) {
-                    $rootScope.$broadcast('http-error-403');
-                } else if (response.status === 404) {
-                    $rootScope.$broadcast('http-error-404');
-                }
-
-                return $q.reject(response);
-            }
-        };
-    }
-
-    angular.module('springbok.core').config(['$httpProvider', function ($httpProvider) {
-        $httpProvider.interceptors.push('httpInterceptor');
-    }]);
 })();
 (function () {
     'use strict';
@@ -615,7 +726,7 @@
 
     angular.module('springbok.core').directive('sbLanguagePicker', sbLanguagePicker);
 
-    var TEMPLATE = '<li class="green" ' + 'ng-controller="i18nController as i18n"> ' + '<a data-toggle="dropdown" class="dropdown-toggle pointer" aria-expanded="false"> ' + '<span class="user-info"> ' + '<small>{{ \'I18N_LANGUAGE\' | translate}}</small> ' + '{{i18n.get(authentication.session.language).i18nKey | translate}} ' + '</span> ' + '<i class="ace-icon fa fa-caret-down"></i> ' + '</a> ' + '<ul class="user-menu dropdown-menu-right dropdown-menu dropdown-yellow dropdown-caret dropdown-close"> ' + '<li ng-repeat="language in i18n.languages"> ' + '<a class="pointer" ng-click="i18n.change(language.key)"> ' + '<img width="15" ng-src="assets/images/i18n/{{language.key}}.png" alt="{{language.i18nKey | translate}} flag"/> ' + '{{language.i18nKey | translate }} ' + '</a> ' + '</li> ' + '</ul> ' + '</li>';
+    var TEMPLATE = '<li id="sb-language-picker" class="green" ' + 'ng-controller="i18nController as i18n"> ' + '<a data-toggle="dropdown" class="dropdown-toggle pointer" aria-expanded="false"> ' + '<span class="user-info"> ' + '<small>{{ \'I18N_LANGUAGE\' | translate}}</small> ' + '{{i18n.get(authentication.session.language).i18nKey | translate}} ' + '</span> ' + '<i class="ace-icon fa fa-caret-down"></i> ' + '</a> ' + '<ul class="user-menu dropdown-menu-right dropdown-menu dropdown-yellow dropdown-caret dropdown-close"> ' + '<li ng-repeat="language in i18n.languages"> ' + '<a class="pointer" ng-click="i18n.change(language.key)"> ' + '<img width="15" ng-src="assets/images/i18n/{{language.key}}.png" alt="{{language.i18nKey | translate}} flag"/> ' + '{{language.i18nKey | translate }} ' + '</a> ' + '</li> ' + '</ul> ' + '</li>';
 
     function sbLanguagePicker() {
         return {

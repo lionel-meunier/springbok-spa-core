@@ -3,7 +3,7 @@
     
     angular.module('springbok.core').directive('sbLanguagePicker', sbLanguagePicker);
     
-    var TEMPLATE = '<li class="green" ' +
+    var TEMPLATE = '<li id="sb-language-picker" class="green" ' +
                         'ng-controller="i18nController as i18n"> ' +
                         '<a data-toggle="dropdown" class="dropdown-toggle pointer" aria-expanded="false"> ' +
                             '<span class="user-info"> ' +
