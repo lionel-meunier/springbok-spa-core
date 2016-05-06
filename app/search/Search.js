@@ -7,9 +7,9 @@
     
     function Search($log, $q, $http, pagination, searchCriterias) {
         
-        const DIRECTION_ASC = 'asc';
-        const DIRECTION_DESC = 'desc';
-        const DEFAULT_DIRECTION = 'asc';
+        var DIRECTION_ASC = 'asc';
+        var DIRECTION_DESC = 'desc';
+        var DEFAULT_DIRECTION = 'asc';
 
         var Search = function(searchConfiguration) {
             this.configuration = searchConfiguration;
