@@ -20,7 +20,6 @@ System.config({
     "angular-translate": "github:angular-translate/bower-angular-translate@2.9.2",
     "angular-translate-handler-log": "github:angular-translate/bower-angular-translate-handler-log@2.9.2",
     "angular-translate-loader-static-files": "github:angular-translate/bower-angular-translate-loader-static-files@2.9.2",
-    "angular/bower-angular": "github:angular/bower-angular@1.5.0",
     "angular/bower-angular-mocks": "github:angular/bower-angular-mocks@1.5.0",
     "babel": "npm:babel-core@5.8.35",
     "babel-runtime": "npm:babel-runtime@5.8.35",
@@ -36,16 +35,16 @@ System.config({
       "angular-translate": "github:angular-translate/bower-angular-translate@2.9.2"
     },
     "github:angular-translate/bower-angular-translate@2.9.2": {
-      "angular": "github:angular/bower-angular@1.5.0"
+      "angular": "github:angular/bower-angular@1.5.5"
     },
     "github:angular/bower-angular-mocks@1.5.0": {
-      "angular": "github:angular/bower-angular@1.5.0"
+      "angular": "github:angular/bower-angular@1.5.5"
     },
     "github:angular/bower-angular-route@1.5.0": {
-      "angular": "github:angular/bower-angular@1.5.0"
+      "angular": "github:angular/bower-angular@1.5.5"
     },
     "github:angular/bower-angular-sanitize@1.5.0": {
-      "angular": "github:angular/bower-angular@1.5.0"
+      "angular": "github:angular/bower-angular@1.5.5"
     },
     "github:jspm/nodelibs-assert@0.1.0": {
       "assert": "npm:assert@1.3.0"

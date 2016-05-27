@@ -3,8 +3,8 @@
     
     var coreDependencies = [
         'pascalprecht.translate', 
-        'ngRoute',
-        'ui-notification'
+        'ngSanitize',
+        'ngRoute'
     ];
     
     var core = angular.module('springbok.core', coreDependencies);

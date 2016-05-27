@@ -21,7 +21,7 @@ module.exports = function(config) {
       'jspm_packages/github/angular/bower-angular@1.5.0/angular.js',
       'jspm_packages/github/angular/bower-angular-mocks@1.5.0/angular-mocks.js',
       'jspm_packages/github/angular/bower-angular-route@1.5.0/angular-route.js',
-//      'jspm_packages/github/angular/bower-angular-sanitize@1.5.0/angular-sanitize.js',
+      'jspm_packages/github/angular/bower-angular-sanitize@1.5.0/angular-sanitize.js',
       'jspm_packages/github/angular-translate/bower-angular-translate@2.9.2/angular-translate.js',
       'jspm_packages/github/angular-translate/bower-angular-translate-loader-static-files@2.9.2/angular-translate-loader-static-files.js',
       'jspm_packages/github/angular-translate/bower-angular-translate-handler-log@2.9.2/angular-translate-handler-log.js',
