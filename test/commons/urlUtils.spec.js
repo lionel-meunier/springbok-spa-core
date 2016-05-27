@@ -5,7 +5,7 @@ describe('urlUtils tests', function () {
     
     beforeEach(module('springbok.core'));
     
-    beforeEach(inject(function (_urlUtils_) {
+    beforeEach(inject(function(_urlUtils_) {
         urlUtils = _urlUtils_;
     }));
     
