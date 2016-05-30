@@ -5,12 +5,12 @@
     
     var TEMPLATE = '<div ng-controller="menuController as menu">' +
                         '<div class="sidebar-shortcuts-large text-center">' +
-                            '<a href="#/">' +
+                            '<a ng-href="#/">' +
                                 '<img src="assets/images/logo.png" width="100" alt="Logo"/>' +
                             '</a>' +
                         '</div>' +
                         '<div class="sidebar-shortcuts-mini text-center">' +
-                            '<a href="#/">' +
+                            '<a ng-href="#/">' +
                                 '<img src="assets/images/logo.png" width="30" alt="Logo"/>' +
                             '</a>' +
                         '</div>' + 
@@ -19,7 +19,7 @@
                                 'ng-if="item.isAuthorized" ' +
                                 'ng-class="{\'active\' : item.isActive}">' +
                                 '<!-- Items without submenu -->' +
-                                '<a href="{{item.url}}" class="pointer" ' +
+                                '<a ng-href="{{item.url}}" class="pointer" ' +
                                    'ng-if="!menu.hasSubItems(item)" ' +
                                    'ng-click="menu.toggle(item)" ' +
                                    'ng-class="[item.cssClass, item.backgroundCssClass]">' +
@@ -40,7 +40,7 @@
                                     '<li ng-repeat="subItem in item.subItems" ' +
                                         'ng-if="subItem.isAuthorized" ' +
                                         'ng-class="{\'active\' : subItem.isActive}">' +
-                                        '<a href="{{subItem.url}}" class="pointer" ' +
+                                        '<a ng-href="{{subItem.url}}" class="pointer" ' +
                                             'ng-click="menu.toggle(subItem, item)" ' +
                                             'ng-class="[subItem.cssClass, subItem.backgroundCssClass]">' +
                                             '<i class="menu-icon fa fa-angle-double-right"></i>' +

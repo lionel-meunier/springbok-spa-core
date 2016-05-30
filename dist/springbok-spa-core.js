@@ -70,6 +70,73 @@
 (function () {
     'use strict';
 
+    angular.module('springbok.core').service('endpoints', endpoints);
+
+    endpoints.$inject = ['$log', 'urlUtils'];
+
+    function endpoints($log, urlUtils) {
+        this.apiRootPath = '';
+
+        this.routes = {};
+
+        /**
+         * Sets the server API root path
+         * @param {string} apiRootPath the server API root path
+         * @returns {void}
+         */
+        this.setApiRootPath = function (apiRootPath) {
+            this.apiRootPath = urlUtils.addSlashAtTheEndIfNotPresent(apiRootPath);
+        };
+
+        /**
+         * Adds a route, example : endpoints.add('enums', '/api/public/constants')
+         * @param {string} routeKey the 
+         * @param {string} route
+         * @returns {void}
+         */
+        this.add = function (routeKey, route) {
+            this.routes[routeKey] = route;
+        };
+
+        /**
+         * Retrieve a relative URL from a key, and process its parameters if exists
+         *
+         * @param routeName key of the requested route such as auth for /auth/logout
+         * @param parameters path parameters example :
+         * {
+         *  id: value,
+         *  name: value
+         * }
+         * for URLs like /myurl/:id/people/:name
+         *
+         * @returns {string} relative URL with processed parameters
+         * @see routes
+         */
+        this.get = function (routeName, parameters) {
+            var route = this.routes[routeName];
+
+            if (s.isBlank(this.apiRootPath)) {
+                $log.debug('The API root path has not been set, call setApiRootPath(apiRootPath) to set the API root path, example : endpoints.setApiRootPath(\'http://client.iocean.fr/api/\')');
+            }
+
+            return this.apiRootPath + this.processParameters(route, parameters);
+        };
+
+        /**
+         * Process URL parameters
+         *
+         * @param route relative raw URL such as /myurl/:id/people/:name
+         * @param parameters path parameters key/value object
+         * @return {string} relative url with parameter placeholders replaced by values
+         */
+        this.processParameters = function (route, parameters) {
+            return urlUtils.processUrlWithPathVariables(route, parameters, ':');
+        };
+    }
+})();
+(function () {
+    'use strict';
+
     angular.module('springbok.core').factory('Search', Search);
 
     Search.$inject = ['$log', '$q', '$http', 'pagination', 'searchCriterias'];
@@ -366,73 +433,6 @@
          */
         this.clear = function () {
             searchCriterias = {};
-        };
-    }
-})();
-(function () {
-    'use strict';
-
-    angular.module('springbok.core').service('endpoints', endpoints);
-
-    endpoints.$inject = ['$log', 'urlUtils'];
-
-    function endpoints($log, urlUtils) {
-        this.apiRootPath = '';
-
-        this.routes = {};
-
-        /**
-         * Sets the server API root path
-         * @param {string} apiRootPath the server API root path
-         * @returns {void}
-         */
-        this.setApiRootPath = function (apiRootPath) {
-            this.apiRootPath = urlUtils.addSlashAtTheEndIfNotPresent(apiRootPath);
-        };
-
-        /**
-         * Adds a route, example : endpoints.add('enums', '/api/public/constants')
-         * @param {string} routeKey the 
-         * @param {string} route
-         * @returns {void}
-         */
-        this.add = function (routeKey, route) {
-            this.routes[routeKey] = route;
-        };
-
-        /**
-         * Retrieve a relative URL from a key, and process its parameters if exists
-         *
-         * @param routeName key of the requested route such as auth for /auth/logout
-         * @param parameters path parameters example :
-         * {
-         *  id: value,
-         *  name: value
-         * }
-         * for URLs like /myurl/:id/people/:name
-         *
-         * @returns {string} relative URL with processed parameters
-         * @see routes
-         */
-        this.get = function (routeName, parameters) {
-            var route = this.routes[routeName];
-
-            if (s.isBlank(this.apiRootPath)) {
-                $log.debug('The API root path has not been set, call setApiRootPath(apiRootPath) to set the API root path, example : endpoints.setApiRootPath(\'http://client.iocean.fr/api/\')');
-            }
-
-            return this.apiRootPath + this.processParameters(route, parameters);
-        };
-
-        /**
-         * Process URL parameters
-         *
-         * @param route relative raw URL such as /myurl/:id/people/:name
-         * @param parameters path parameters key/value object
-         * @return {string} relative url with parameter placeholders replaced by values
-         */
-        this.processParameters = function (route, parameters) {
-            return urlUtils.processUrlWithPathVariables(route, parameters, ':');
         };
     }
 })();
@@ -837,7 +837,7 @@
 
     angular.module('springbok.core').directive('sbMenu', sbMenu);
 
-    var TEMPLATE = '<div ng-controller="menuController as menu">' + '<div class="sidebar-shortcuts-large text-center">' + '<a href="#/">' + '<img src="assets/images/logo.png" width="100" alt="Logo"/>' + '</a>' + '</div>' + '<div class="sidebar-shortcuts-mini text-center">' + '<a href="#/">' + '<img src="assets/images/logo.png" width="30" alt="Logo"/>' + '</a>' + '</div>' + '<ul class="nav nav-list">' + '<li ng-repeat="item in menu.items" ' + 'ng-if="item.isAuthorized" ' + 'ng-class="{\'active\' : item.isActive}">' + '<!-- Items without submenu -->' + '<a href="{{item.url}}" class="pointer" ' + 'ng-if="!menu.hasSubItems(item)" ' + 'ng-click="menu.toggle(item)" ' + 'ng-class="[item.cssClass, item.backgroundCssClass]">' + '<i class="menu-icon fa" ng-class="item.icon"></i>' + '<span class="menu-text">{{item.labelKey | translate}}</span>' + '</a>' + '<!-- Items with submenu -->' + '<a class="pointer" ' + 'ng-if="menu.hasSubItems(item)" ' + 'ng-click="menu.toggle(item)" ' + 'ng-class="[item.cssClass, item.backgroundCssClass]">' + '<i class="menu-icon fa" ng-class="item.icon"></i>' + '<span class="menu-text">{{item.labelKey | translate}}</span>' + '<b class="arrow fa fa-angle-down"></b>' + '</a>' + '<ul class="submenu" ' + 'ng-class="{\'nav-hide\' : !item.isSubMenuOpened, \'nav-show\' : item.isSubMenuOpened}">' + '<li ng-repeat="subItem in item.subItems" ' + 'ng-if="subItem.isAuthorized" ' + 'ng-class="{\'active\' : subItem.isActive}">' + '<a href="{{subItem.url}}" class="pointer" ' + 'ng-click="menu.toggle(subItem, item)" ' + 'ng-class="[subItem.cssClass, subItem.backgroundCssClass]">' + '<i class="menu-icon fa fa-angle-double-right"></i>' + '<span class="menu-text">{{subItem.labelKey | translate}}</span>' + '</a>' + '</ul>' + '</li>' + '</ul>' + '<div id="sidebar-collapse" class="sidebar-toggle sidebar-collapse" ' + 'ng-click="menu.collapseMenu()">' + '<i id="sidebar-toggle-icon" class="ace-icon fa fa-angle-double-left" ' + 'ng-class="{\'fa-angle-double-right\' : menu.isMinified, \'fa-angle-double-left\' : !isMinified}"></i>' + '</div>' + '</div>';
+    var TEMPLATE = '<div ng-controller="menuController as menu">' + '<div class="sidebar-shortcuts-large text-center">' + '<a ng-href="#/">' + '<img src="assets/images/logo.png" width="100" alt="Logo"/>' + '</a>' + '</div>' + '<div class="sidebar-shortcuts-mini text-center">' + '<a ng-href="#/">' + '<img src="assets/images/logo.png" width="30" alt="Logo"/>' + '</a>' + '</div>' + '<ul class="nav nav-list">' + '<li ng-repeat="item in menu.items" ' + 'ng-if="item.isAuthorized" ' + 'ng-class="{\'active\' : item.isActive}">' + '<!-- Items without submenu -->' + '<a ng-href="{{item.url}}" class="pointer" ' + 'ng-if="!menu.hasSubItems(item)" ' + 'ng-click="menu.toggle(item)" ' + 'ng-class="[item.cssClass, item.backgroundCssClass]">' + '<i class="menu-icon fa" ng-class="item.icon"></i>' + '<span class="menu-text">{{item.labelKey | translate}}</span>' + '</a>' + '<!-- Items with submenu -->' + '<a class="pointer" ' + 'ng-if="menu.hasSubItems(item)" ' + 'ng-click="menu.toggle(item)" ' + 'ng-class="[item.cssClass, item.backgroundCssClass]">' + '<i class="menu-icon fa" ng-class="item.icon"></i>' + '<span class="menu-text">{{item.labelKey | translate}}</span>' + '<b class="arrow fa fa-angle-down"></b>' + '</a>' + '<ul class="submenu" ' + 'ng-class="{\'nav-hide\' : !item.isSubMenuOpened, \'nav-show\' : item.isSubMenuOpened}">' + '<li ng-repeat="subItem in item.subItems" ' + 'ng-if="subItem.isAuthorized" ' + 'ng-class="{\'active\' : subItem.isActive}">' + '<a ng-href="{{subItem.url}}" class="pointer" ' + 'ng-click="menu.toggle(subItem, item)" ' + 'ng-class="[subItem.cssClass, subItem.backgroundCssClass]">' + '<i class="menu-icon fa fa-angle-double-right"></i>' + '<span class="menu-text">{{subItem.labelKey | translate}}</span>' + '</a>' + '</ul>' + '</li>' + '</ul>' + '<div id="sidebar-collapse" class="sidebar-toggle sidebar-collapse" ' + 'ng-click="menu.collapseMenu()">' + '<i id="sidebar-toggle-icon" class="ace-icon fa fa-angle-double-left" ' + 'ng-class="{\'fa-angle-double-right\' : menu.isMinified, \'fa-angle-double-left\' : !isMinified}"></i>' + '</div>' + '</div>';
 
     function sbMenu() {
         return {
