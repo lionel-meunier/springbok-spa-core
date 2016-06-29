@@ -4,12 +4,12 @@
     angular.module('springbok.core').directive('sbMenu', sbMenu);
     
     var TEMPLATE = '<div ng-controller="menuController as menu">' +
-                        '<div class="sidebar-shortcuts-large text-center">' +
+                        '<div ng-if="showLogo" class="sidebar-shortcuts-large text-center">' +
                             '<a ng-href="#/">' +
                                 '<img src="assets/images/logo.png" width="100" alt="Logo"/>' +
                             '</a>' +
                         '</div>' +
-                        '<div class="sidebar-shortcuts-mini text-center">' +
+                        '<div ng-if="showLogo" class="sidebar-shortcuts-mini text-center">' +
                             '<a ng-href="#/">' +
                                 '<img src="assets/images/logo.png" width="30" alt="Logo"/>' +
                             '</a>' +
@@ -62,7 +62,15 @@
             restrict: 'E',
             template: TEMPLATE,
             transclude: true,
-            replace: true
+            replace: true,
+            scope: {
+                showLogo: '='
+            },
+            link: function(scope) {
+                if (scope.showLogo !== true && scope.showLogo !== false) {
+                    scope.showLogo = true;
+                }
+            }
         }; 
     }
 })();
