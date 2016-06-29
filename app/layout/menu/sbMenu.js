@@ -63,11 +63,10 @@
             template: TEMPLATE,
             transclude: true,
             replace: true,
-            scope: {
-                showLogo: '='
-            },
-            link: function(scope) {
-                if (scope.showLogo !== true && scope.showLogo !== false) {
+            link: function(scope, element, attributes) {
+                if (attributes.showLogo === 'false') {
+                    scope.showLogo = false;
+                } else {
                     scope.showLogo = true;
                 }
             }

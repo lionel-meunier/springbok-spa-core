@@ -439,6 +439,201 @@
 (function () {
     'use strict';
 
+    angular.module('springbok.core').controller('menuController', menuController);
+
+    menuController.$inject = ['menuItems'];
+
+    function menuController(menuItems) {
+        var menu = this;
+
+        menu.isMinified = false;
+        menu.items = menuItems.all;
+
+        menu.collapseMenu = function () {
+            menu.isMinified = !menu.isMinified;
+        };
+
+        menu.resetState = function () {
+            menu.items.forEach(function (item) {
+                item.isActive = false;
+
+                if (menu.hasSubItems(item)) {
+                    item.isSubMenuOpened = false;
+
+                    item.subItems.forEach(function (subItem) {
+                        subItem.isActive = false;
+                    });
+                }
+            });
+        };
+
+        menu.hasSubItems = function (item) {
+            return !_.isNull(item.subItems) && !_.isUndefined(item.subItems);
+        };
+
+        menu.toggle = function (item, parent) {
+            var itemSubMenuWasNotOpened = !item.isSubMenuOpened;
+            var itemHasParent = !_.isNull(parent) && !_.isUndefined(parent);
+
+            menu.resetState();
+            if (menu.hasSubItems(item)) {
+                if (itemSubMenuWasNotOpened) {
+                    item.isSubMenuOpened = true;
+                }
+            } else {
+                if (itemHasParent) {
+                    parent.isSubMenuOpened = true;
+                }
+
+                item.isActive = true;
+            }
+        };
+    }
+})();
+(function () {
+    'use strict';
+
+    angular.module('springbok.core').service('menuItems', menuItems);
+
+    function menuItems() {
+        var menuItems = this;
+
+        menuItems.all = [];
+
+        menuItems.add = function (item) {
+            menuItems.all.push(item);
+        };
+    }
+})();
+(function () {
+    'use strict';
+
+    angular.module('springbok.core').directive('sbMenu', sbMenu);
+
+    var TEMPLATE = '<div ng-controller="menuController as menu">' + '<div ng-if="showLogo" class="sidebar-shortcuts-large text-center">' + '<a ng-href="#/">' + '<img src="assets/images/logo.png" width="100" alt="Logo"/>' + '</a>' + '</div>' + '<div ng-if="showLogo" class="sidebar-shortcuts-mini text-center">' + '<a ng-href="#/">' + '<img src="assets/images/logo.png" width="30" alt="Logo"/>' + '</a>' + '</div>' + '<ul class="nav nav-list">' + '<li ng-repeat="item in menu.items" ' + 'ng-if="item.isAuthorized" ' + 'ng-class="{\'active\' : item.isActive}">' + '<!-- Items without submenu -->' + '<a ng-href="{{item.url}}" class="pointer" ' + 'ng-if="!menu.hasSubItems(item)" ' + 'ng-click="menu.toggle(item)" ' + 'ng-class="[item.cssClass, item.backgroundCssClass]">' + '<i class="menu-icon fa" ng-class="item.icon"></i>' + '<span class="menu-text">{{item.labelKey | translate}}</span>' + '</a>' + '<!-- Items with submenu -->' + '<a class="pointer" ' + 'ng-if="menu.hasSubItems(item)" ' + 'ng-click="menu.toggle(item)" ' + 'ng-class="[item.cssClass, item.backgroundCssClass]">' + '<i class="menu-icon fa" ng-class="item.icon"></i>' + '<span class="menu-text">{{item.labelKey | translate}}</span>' + '<b class="arrow fa fa-angle-down"></b>' + '</a>' + '<ul class="submenu" ' + 'ng-class="{\'nav-hide\' : !item.isSubMenuOpened, \'nav-show\' : item.isSubMenuOpened}">' + '<li ng-repeat="subItem in item.subItems" ' + 'ng-if="subItem.isAuthorized" ' + 'ng-class="{\'active\' : subItem.isActive}">' + '<a ng-href="{{subItem.url}}" class="pointer" ' + 'ng-click="menu.toggle(subItem, item)" ' + 'ng-class="[subItem.cssClass, subItem.backgroundCssClass]">' + '<i class="menu-icon fa fa-angle-double-right"></i>' + '<span class="menu-text">{{subItem.labelKey | translate}}</span>' + '</a>' + '</ul>' + '</li>' + '</ul>' + '<div id="sidebar-collapse" class="sidebar-toggle sidebar-collapse" ' + 'ng-click="menu.collapseMenu()">' + '<i id="sidebar-toggle-icon" class="ace-icon fa fa-angle-double-left" ' + 'ng-class="{\'fa-angle-double-right\' : menu.isMinified, \'fa-angle-double-left\' : !isMinified}"></i>' + '</div>' + '</div>';
+
+    function sbMenu() {
+        return {
+            restrict: 'E',
+            template: TEMPLATE,
+            transclude: true,
+            replace: true,
+            link: function (scope, element, attributes) {
+                if (attributes.showLogo === 'false') {
+                    scope.showLogo = false;
+                } else {
+                    scope.showLogo = true;
+                }
+            }
+        };
+    }
+})();
+(function () {
+    'use strict';
+
+    angular.module('springbok.core').service('notification', notification);
+
+    notification.$inject = ['$timeout'];
+
+    function notification($timeout) {
+        var notification = this;
+        var DEFAULTS = {
+            delay: 5000,
+            type: 'info'
+        };
+
+        /**
+         * Sets the default delay, in milliseconds, before the notification fades out.
+         * @param {integer} delay the delay in milliseconds before the notification fades, 5000 milliseconds by default 
+         * @returns {undefined}
+         */
+        notification.setDefaultDelay = function (delay) {
+            DEFAULTS.delay = delay || DEFAULTS.delay;
+        };
+
+        /**
+         * Displays a notification and makes it fade out after a specifific delay.
+         * @param {Object} notification the a notification object {type: 'info', message: 'MY_KEY', show: true}
+         * @param {integer} delay the delay in milliseconds before the notification fades out, 5000 milliseconds by default 
+         */
+        notification.display = function (notification, delay) {
+            delay = delay || DEFAULTS.delay;
+
+            notification.show = true;
+
+            if (!_.isNull(notification) && !_.isUndefined(notification)) {
+                $timeout(function () {
+                    notification.show = false;
+                }, delay);
+            }
+        };
+
+        /**
+         * Creates a notification from a message key and a type, info type by default.
+         * @param {string} type the type of alert (info|success|warning|error)
+         * @param {string} message the message key 
+         * @returns a notification object {type: 'info', message: 'MY_KEY', show: true}
+         */
+        notification.create = function (type, message) {
+            type = type || DEFAULTS.type;
+
+            return {
+                show: false,
+                type: type,
+                message: message
+            };
+        };
+    }
+})();
+(function () {
+    'use strict';
+
+    angular.module('springbok.core').directive('sbNotification', sbNotification);
+
+    var TEMPLATE = '<div ng-show="show" class="alert fixed-notification {{typeClass}}" style="z-index: 2000; position: fixed; width: 25%; top: 5%; right: 0.5%;">' + '<p style="float: left; width: 95%;">' + '{{message | translate}}' + '</p>' + '<button type="button" class="close" ng-click="close()" width: 5%;>' + '<i class="fa fa-times"></i>' + '</button>' + '</div>';
+
+    function sbNotification() {
+        return {
+            restrict: 'E',
+            template: TEMPLATE,
+            transclude: true,
+            replace: true,
+            scope: {
+                type: '@',
+                message: '=',
+                show: '='
+            },
+            link: function (scope, element, attributes) {
+                scope.close = function () {
+                    scope.show = false;
+                };
+
+                attributes.$observe('type', function (value) {
+                    switch (value) {
+                        case 'info':
+                            scope.typeClass = 'alert-info';
+                            break;
+                        case 'success':
+                            scope.typeClass = 'alert-success';
+                            break;
+                        case 'warning':
+                            scope.typeClass = 'alert-warning';
+                            break;
+                        case 'error':
+                            scope.typeClass = 'alert-danger';
+                            break;
+                        default:
+                            scope.typeClass = 'alert-info';
+                            break;
+                    }
+                });
+            }
+        };
+    }
+})();
+(function () {
+    'use strict';
+
     angular.module('springbok.core').filter('statusKey', statusKey);
 
     function statusKey() {
@@ -448,55 +643,6 @@
             } else {
                 return 'GLOBAL_DEACTIVATED';
             }
-        };
-    }
-})();
-(function () {
-    'use strict';
-
-    angular.module('springbok.core').service('encryptionUtils', encryptionUtils);
-
-    function encryptionUtils() {
-        this.encodeToBase64 = function (stringToEncode) {
-            return window.btoa(unescape(encodeURIComponent(stringToEncode)));
-        };
-    }
-})();
-(function () {
-    'use strict';
-
-    angular.module('springbok.core').service('urlUtils', urlUtils);
-
-    function urlUtils() {
-        this.addSlashAtTheEndIfNotPresent = function (url) {
-            if (!s.isBlank(url)) {
-                var lastIndexOfSlash = url.lastIndexOf('/');
-                var lastCharacterIsASlash = lastIndexOfSlash === url.length - 1;
-
-                if (!lastCharacterIsASlash) {
-                    url += '/';
-                }
-            }
-
-            return url;
-        };
-
-        this.processUrlWithPathVariables = function (url, pathVariables, pathVariableCharacter) {
-            var processedUrl = url,
-                paramMatch;
-
-            if (_.isUndefined(pathVariables) || !_.isObject(pathVariables)) {
-                return processedUrl;
-            }
-
-            _.each(_.keys(pathVariables), function (key) {
-                paramMatch = pathVariableCharacter + key;
-                if (s.include(url, paramMatch)) {
-                    processedUrl = processedUrl.replace(paramMatch, pathVariables[key]);
-                }
-            });
-
-            return processedUrl;
         };
     }
 })();
@@ -668,6 +814,55 @@
 (function () {
     'use strict';
 
+    angular.module('springbok.core').service('encryptionUtils', encryptionUtils);
+
+    function encryptionUtils() {
+        this.encodeToBase64 = function (stringToEncode) {
+            return window.btoa(unescape(encodeURIComponent(stringToEncode)));
+        };
+    }
+})();
+(function () {
+    'use strict';
+
+    angular.module('springbok.core').service('urlUtils', urlUtils);
+
+    function urlUtils() {
+        this.addSlashAtTheEndIfNotPresent = function (url) {
+            if (!s.isBlank(url)) {
+                var lastIndexOfSlash = url.lastIndexOf('/');
+                var lastCharacterIsASlash = lastIndexOfSlash === url.length - 1;
+
+                if (!lastCharacterIsASlash) {
+                    url += '/';
+                }
+            }
+
+            return url;
+        };
+
+        this.processUrlWithPathVariables = function (url, pathVariables, pathVariableCharacter) {
+            var processedUrl = url,
+                paramMatch;
+
+            if (_.isUndefined(pathVariables) || !_.isObject(pathVariables)) {
+                return processedUrl;
+            }
+
+            _.each(_.keys(pathVariables), function (key) {
+                paramMatch = pathVariableCharacter + key;
+                if (s.include(url, paramMatch)) {
+                    processedUrl = processedUrl.replace(paramMatch, pathVariables[key]);
+                }
+            });
+
+            return processedUrl;
+        };
+    }
+})();
+(function () {
+    'use strict';
+
     angular.module('springbok.core').controller('i18nController', i18nController);
 
     i18nController.$inject = ['$translate', 'languages', 'session'];
@@ -761,201 +956,5 @@
 
     function Logging($logProvider) {
         $logProvider.debugEnabled(CONFIG.app.logDebugEnabled);
-    }
-})();
-(function () {
-    'use strict';
-
-    angular.module('springbok.core').controller('menuController', menuController);
-
-    menuController.$inject = ['menuItems'];
-
-    function menuController(menuItems) {
-        var menu = this;
-
-        menu.isMinified = false;
-        menu.items = menuItems.all;
-
-        menu.collapseMenu = function () {
-            menu.isMinified = !menu.isMinified;
-        };
-
-        menu.resetState = function () {
-            menu.items.forEach(function (item) {
-                item.isActive = false;
-
-                if (menu.hasSubItems(item)) {
-                    item.isSubMenuOpened = false;
-
-                    item.subItems.forEach(function (subItem) {
-                        subItem.isActive = false;
-                    });
-                }
-            });
-        };
-
-        menu.hasSubItems = function (item) {
-            return !_.isNull(item.subItems) && !_.isUndefined(item.subItems);
-        };
-
-        menu.toggle = function (item, parent) {
-            var itemSubMenuWasNotOpened = !item.isSubMenuOpened;
-            var itemHasParent = !_.isNull(parent) && !_.isUndefined(parent);
-
-            menu.resetState();
-            if (menu.hasSubItems(item)) {
-                if (itemSubMenuWasNotOpened) {
-                    item.isSubMenuOpened = true;
-                }
-            } else {
-                if (itemHasParent) {
-                    parent.isSubMenuOpened = true;
-                }
-
-                item.isActive = true;
-            }
-        };
-    }
-})();
-(function () {
-    'use strict';
-
-    angular.module('springbok.core').service('menuItems', menuItems);
-
-    function menuItems() {
-        var menuItems = this;
-
-        menuItems.all = [];
-
-        menuItems.add = function (item) {
-            menuItems.all.push(item);
-        };
-    }
-})();
-(function () {
-    'use strict';
-
-    angular.module('springbok.core').directive('sbMenu', sbMenu);
-
-    var TEMPLATE = '<div ng-controller="menuController as menu">' + '<div ng-if="showLogo" class="sidebar-shortcuts-large text-center">' + '<a ng-href="#/">' + '<img src="assets/images/logo.png" width="100" alt="Logo"/>' + '</a>' + '</div>' + '<div ng-if="showLogo" class="sidebar-shortcuts-mini text-center">' + '<a ng-href="#/">' + '<img src="assets/images/logo.png" width="30" alt="Logo"/>' + '</a>' + '</div>' + '<ul class="nav nav-list">' + '<li ng-repeat="item in menu.items" ' + 'ng-if="item.isAuthorized" ' + 'ng-class="{\'active\' : item.isActive}">' + '<!-- Items without submenu -->' + '<a ng-href="{{item.url}}" class="pointer" ' + 'ng-if="!menu.hasSubItems(item)" ' + 'ng-click="menu.toggle(item)" ' + 'ng-class="[item.cssClass, item.backgroundCssClass]">' + '<i class="menu-icon fa" ng-class="item.icon"></i>' + '<span class="menu-text">{{item.labelKey | translate}}</span>' + '</a>' + '<!-- Items with submenu -->' + '<a class="pointer" ' + 'ng-if="menu.hasSubItems(item)" ' + 'ng-click="menu.toggle(item)" ' + 'ng-class="[item.cssClass, item.backgroundCssClass]">' + '<i class="menu-icon fa" ng-class="item.icon"></i>' + '<span class="menu-text">{{item.labelKey | translate}}</span>' + '<b class="arrow fa fa-angle-down"></b>' + '</a>' + '<ul class="submenu" ' + 'ng-class="{\'nav-hide\' : !item.isSubMenuOpened, \'nav-show\' : item.isSubMenuOpened}">' + '<li ng-repeat="subItem in item.subItems" ' + 'ng-if="subItem.isAuthorized" ' + 'ng-class="{\'active\' : subItem.isActive}">' + '<a ng-href="{{subItem.url}}" class="pointer" ' + 'ng-click="menu.toggle(subItem, item)" ' + 'ng-class="[subItem.cssClass, subItem.backgroundCssClass]">' + '<i class="menu-icon fa fa-angle-double-right"></i>' + '<span class="menu-text">{{subItem.labelKey | translate}}</span>' + '</a>' + '</ul>' + '</li>' + '</ul>' + '<div id="sidebar-collapse" class="sidebar-toggle sidebar-collapse" ' + 'ng-click="menu.collapseMenu()">' + '<i id="sidebar-toggle-icon" class="ace-icon fa fa-angle-double-left" ' + 'ng-class="{\'fa-angle-double-right\' : menu.isMinified, \'fa-angle-double-left\' : !isMinified}"></i>' + '</div>' + '</div>';
-
-    function sbMenu() {
-        return {
-            restrict: 'E',
-            template: TEMPLATE,
-            transclude: true,
-            replace: true,
-            scope: {
-                showLogo: '='
-            },
-            link: function (scope) {
-                if (scope.showLogo !== true && scope.showLogo !== false) {
-                    scope.showLogo = true;
-                }
-            }
-        };
-    }
-})();
-(function () {
-    'use strict';
-
-    angular.module('springbok.core').service('notification', notification);
-
-    notification.$inject = ['$timeout'];
-
-    function notification($timeout) {
-        var notification = this;
-        var DEFAULTS = {
-            delay: 5000,
-            type: 'info'
-        };
-
-        /**
-         * Sets the default delay, in milliseconds, before the notification fades out.
-         * @param {integer} delay the delay in milliseconds before the notification fades, 5000 milliseconds by default 
-         * @returns {undefined}
-         */
-        notification.setDefaultDelay = function (delay) {
-            DEFAULTS.delay = delay || DEFAULTS.delay;
-        };
-
-        /**
-         * Displays a notification and makes it fade out after a specifific delay.
-         * @param {Object} notification the a notification object {type: 'info', message: 'MY_KEY', show: true}
-         * @param {integer} delay the delay in milliseconds before the notification fades out, 5000 milliseconds by default 
-         */
-        notification.display = function (notification, delay) {
-            delay = delay || DEFAULTS.delay;
-
-            notification.show = true;
-
-            if (!_.isNull(notification) && !_.isUndefined(notification)) {
-                $timeout(function () {
-                    notification.show = false;
-                }, delay);
-            }
-        };
-
-        /**
-         * Creates a notification from a message key and a type, info type by default.
-         * @param {string} type the type of alert (info|success|warning|error)
-         * @param {string} message the message key 
-         * @returns a notification object {type: 'info', message: 'MY_KEY', show: true}
-         */
-        notification.create = function (type, message) {
-            type = type || DEFAULTS.type;
-
-            return {
-                show: false,
-                type: type,
-                message: message
-            };
-        };
-    }
-})();
-(function () {
-    'use strict';
-
-    angular.module('springbok.core').directive('sbNotification', sbNotification);
-
-    var TEMPLATE = '<div ng-show="show" class="alert fixed-notification {{typeClass}}" style="z-index: 2000; position: fixed; width: 25%; top: 5%; right: 0.5%;">' + '<p style="float: left; width: 95%;">' + '{{message | translate}}' + '</p>' + '<button type="button" class="close" ng-click="close()" width: 5%;>' + '<i class="fa fa-times"></i>' + '</button>' + '</div>';
-
-    function sbNotification() {
-        return {
-            restrict: 'E',
-            template: TEMPLATE,
-            transclude: true,
-            replace: true,
-            scope: {
-                type: '@',
-                message: '=',
-                show: '='
-            },
-            link: function (scope, element, attributes) {
-                scope.close = function () {
-                    scope.show = false;
-                };
-
-                attributes.$observe('type', function (value) {
-                    switch (value) {
-                        case 'info':
-                            scope.typeClass = 'alert-info';
-                            break;
-                        case 'success':
-                            scope.typeClass = 'alert-success';
-                            break;
-                        case 'warning':
-                            scope.typeClass = 'alert-warning';
-                            break;
-                        case 'error':
-                            scope.typeClass = 'alert-danger';
-                            break;
-                        default:
-                            scope.typeClass = 'alert-info';
-                            break;
-                    }
-                });
-            }
-        };
     }
 })();
