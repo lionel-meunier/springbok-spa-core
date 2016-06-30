@@ -9,8 +9,7 @@
         var session = this;
         
         session.defaultExpirationDurationInMilliseconds = 1 * 3600 * 1000; // 1 hour
-        session.account = {};
-        
+        init();
         getCurrent();
         
         session.persist = function() {
@@ -98,13 +97,13 @@
          * @returns {void}
          */
         function init() {
-            session.account = {
-                infos : {},
-                username: '',
-                password: '',
-                expiration: null,
-                authenticated: false
-            };
+            if (!session.account) {
+                session.account = {};
+            }
+            
+            session.account.infos = {};
+            session.account.expiration = null;
+            session.account.authenticated = false;
         }
     }
 })();
