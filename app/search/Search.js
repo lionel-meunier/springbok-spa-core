@@ -89,6 +89,8 @@
                 Object.keys(self.configuration.form).forEach(function(formField) {
                     config.params[formField] = _.isUndefined(self.configuration.form[formField]) ? null : self.configuration.form[formField];
                 });
+            } else if (!self.configuration.form) {
+                self.configuration.form = {};
             }
             
             if (!self.configuration.form.direction) {
