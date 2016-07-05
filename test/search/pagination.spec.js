@@ -34,7 +34,6 @@
             expect(myPagination.currentPageTo).toBe(20);
         });
 
-
         it('should give correct position in page 4 for multiple pages', function () {
             var myPagination = {
                 totalElements: 300,
@@ -97,8 +96,5 @@
             expect(myPagination.currentPageFrom).toBe(501);
             expect(myPagination.currentPageTo).toBe(501);
         });
-
-
     });
-
 })();
