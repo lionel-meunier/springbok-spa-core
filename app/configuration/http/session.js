@@ -55,7 +55,7 @@
 
         session.updatePassword = function (password) {
             session.account.password = password;
-            setTokenAndExpiration();
+            session.setTokenAndExpiration();
         };
         
         session.setDefaultExpirationDurationInMilliseconds = function(defaultExpirationDurationInMilliseconds) {

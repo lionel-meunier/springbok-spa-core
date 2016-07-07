@@ -16,6 +16,7 @@ module.exports = function(config) {
     // list of files / patterns to load in the browser
     files: [
       'node_modules/babel-polyfill/dist/polyfill.js',
+      'test/config.js',
       'jspm_packages/github/jashkenas/underscore@1.8.3/underscore.js',
       'jspm_packages/github/epeli/underscore.string@3.3.4/dist/underscore.string.js',
       'jspm_packages/github/angular/bower-angular@1.5.0/angular.js',
@@ -80,7 +81,7 @@ module.exports = function(config) {
 
     // start these browsers
     // available browser launchers: https://npmjs.org/browse/keyword/karma-launcher
-    browsers: ['PhantomJS'],
+    browsers: ['Chrome'],
 
 
     // Continuous Integration mode
