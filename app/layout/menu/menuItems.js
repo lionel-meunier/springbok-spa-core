@@ -12,6 +12,10 @@
             menuItems.all.push(item);
         };
         
+        menuItems.isEmpty = function() {
+            return _.isEmpty(menuItems.all);
+        }
+        
         menuItems.clear = function() {
             menuItems.all = [];
         };
