@@ -14,7 +14,7 @@
                             'clear-text="{{\'GLOBAL_RESET\' | translate}}" ' +
                             'close-text="{{\'GLOBAL_CLOSE\' | translate}}" /> ' +
                         '<span class="input-group-btn"> ' +
-                            '<button type="button" class="btn input-date-btn" ' + 
+                            '<button type="button" class="btn" style="padding: 2px" ' + 
                                     'ng-click="$ctrl.open()"> ' +
                                 '<i class="ace-icon fa fa-calendar-o"></i> ' +
                             '</button> ' +
