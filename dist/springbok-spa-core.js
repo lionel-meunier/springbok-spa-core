@@ -12,69 +12,84 @@
 (function () {
     'use strict';
 
-    angular.module('springbok.core').service('endpoints', endpoints);
+    angular.module('springbok.core').service('enums', enums);
 
-    endpoints.$inject = ['$log', 'urlUtils'];
+    enums.$inject = ['$http', '$q', '$log', 'endpoints'];
 
-    function endpoints($log, urlUtils) {
-        this.apiRootPath = '';
+    function enums($http, $q, $log, endpoints) {
+        var isReady = false;
 
-        this.routes = {};
-
-        /**
-         * Sets the server API root path
-         * @param {string} apiRootPath the server API root path
-         * @returns {void}
-         */
-        this.setApiRootPath = function (apiRootPath) {
-            this.apiRootPath = urlUtils.addSlashAtTheEndIfNotPresent(apiRootPath);
-        };
+        this.data = {};
+        this.ready = $q.defer();
 
         /**
-         * Adds a route, example : endpoints.add('enums', '/api/public/constants')
-         * @param {string} routeKey the 
-         * @param {string} route
-         * @returns {void}
+         * Get all constants
          */
-        this.add = function (routeKey, route) {
-            this.routes[routeKey] = route;
-        };
+        this.load = function () {
+            var self = this;
 
-        /**
-         * Retrieve a relative URL from a key, and process its parameters if exists
-         *
-         * @param routeName key of the requested route such as auth for /auth/logout
-         * @param parameters path parameters example :
-         * {
-         *  id: value,
-         *  name: value
-         * }
-         * for URLs like /myurl/:id/people/:name
-         *
-         * @returns {string} relative URL with processed parameters
-         * @see routes
-         */
-        this.get = function (routeName, parameters) {
-            var route = this.routes[routeName];
-
-            if (s.isBlank(this.apiRootPath)) {
-                $log.debug('The API root path has not been set, call setApiRootPath(apiRootPath) to set the API root path, example : endpoints.setApiRootPath(\'http://client.iocean.fr/api/\')');
+            if (isReady === false) {
+                $http.get(endpoints.get('enums')).success(function (data) {
+                    self.data = data;
+                    isReady = true;
+                    self.ready.resolve();
+                }).error(function () {
+                    $log.error('enumsService is not loaded');
+                    self.ready.reject();
+                });
             }
-
-            return this.apiRootPath + this.processParameters(route, parameters);
         };
 
         /**
-         * Process URL parameters
-         *
-         * @param route relative raw URL such as /myurl/:id/people/:name
-         * @param parameters path parameters key/value object
-         * @return {string} relative url with parameter placeholders replaced by values
+         * Get ready promise
+         * @return {*}
          */
-        this.processParameters = function (route, parameters) {
-            return urlUtils.processUrlWithPathVariables(route, parameters, ':');
+        this.isReady = function () {
+            return this.ready.promise;
+        };
+        /**
+         * Get enums with name in data
+         * @param enumName {String} name to enum
+         * @return {*}
+         */
+        this.getData = function (enumName) {
+            return this.data[enumName];
+        };
+
+        /**
+         * Get enums with name in data
+         * @param enumName {String} name to enum
+         * @return {*}
+         */
+        this.getDataByValue = function (enumName, valueSearch) {
+            var data = this.getData(enumName);
+            return _.findWhere(data, { value: valueSearch });
         };
     }
+})();
+(function () {
+    'use strict';
+
+    var TEMPLATE = '<p class="input-group"> ' + '<input type="text" class="form-control" ' + 'ng-model="$ctrl.dateModel" ' + 'ng-required="{{$ctrl.dateRequired}}" ' + 'name="{{$ctrl.dateFormName}}" ' + 'placeholder="jj/mm/aaaa" ' + 'uib-datepicker-popup="{{$ctrl.dateFormat}}" ' + 'is-open="$ctrl.isOpen" ' + 'on-open-focus="true" ' + 'current-text="{{\'GLOBAL_TODAY\' | translate}}" ' + 'clear-text="{{\'GLOBAL_RESET\' | translate}}" ' + 'close-text="{{\'GLOBAL_CLOSE\' | translate}}" /> ' + '<span class="input-group-btn"> ' + '<button type="button" class="btn input-date-btn" ' + 'ng-click="$ctrl.open()"> ' + '<i class="ace-icon fa fa-calendar-o"></i> ' + '</button> ' + '</span> ' + '</p>';
+
+    function sdDatePickerController() {
+        this.isOpen = false;
+
+        this.open = function () {
+            this.isOpen = true;
+        };
+    }
+
+    angular.module('springbok.core').component('sbDatePicker', {
+        template: TEMPLATE,
+        controller: sdDatePickerController,
+        bindings: {
+            dateFormat: '<',
+            dateRequired: '<',
+            dateModel: '=',
+            dateFormName: '<'
+        }
+    });
 })();
 (function () {
     'use strict';
@@ -383,73 +398,67 @@
 (function () {
     'use strict';
 
-    angular.module('springbok.core').service('enums', enums);
+    angular.module('springbok.core').service('endpoints', endpoints);
 
-    enums.$inject = ['$http', '$q', '$log', 'endpoints'];
+    endpoints.$inject = ['$log', 'urlUtils'];
 
-    function enums($http, $q, $log, endpoints) {
-        var isReady = false;
+    function endpoints($log, urlUtils) {
+        this.apiRootPath = '';
 
-        this.data = {};
-        this.ready = $q.defer();
+        this.routes = {};
 
         /**
-         * Get all constants
+         * Sets the server API root path
+         * @param {string} apiRootPath the server API root path
+         * @returns {void}
          */
-        this.load = function () {
-            var self = this;
+        this.setApiRootPath = function (apiRootPath) {
+            this.apiRootPath = urlUtils.addSlashAtTheEndIfNotPresent(apiRootPath);
+        };
 
-            if (isReady === false) {
-                $http.get(endpoints.get('enums')).success(function (data) {
-                    self.data = data;
-                    isReady = true;
-                    self.ready.resolve();
-                }).error(function () {
-                    $log.error('enumsService is not loaded');
-                    self.ready.reject();
-                });
+        /**
+         * Adds a route, example : endpoints.add('enums', '/api/public/constants')
+         * @param {string} routeKey the 
+         * @param {string} route
+         * @returns {void}
+         */
+        this.add = function (routeKey, route) {
+            this.routes[routeKey] = route;
+        };
+
+        /**
+         * Retrieve a relative URL from a key, and process its parameters if exists
+         *
+         * @param routeName key of the requested route such as auth for /auth/logout
+         * @param parameters path parameters example :
+         * {
+         *  id: value,
+         *  name: value
+         * }
+         * for URLs like /myurl/:id/people/:name
+         *
+         * @returns {string} relative URL with processed parameters
+         * @see routes
+         */
+        this.get = function (routeName, parameters) {
+            var route = this.routes[routeName];
+
+            if (s.isBlank(this.apiRootPath)) {
+                $log.debug('The API root path has not been set, call setApiRootPath(apiRootPath) to set the API root path, example : endpoints.setApiRootPath(\'http://client.iocean.fr/api/\')');
             }
+
+            return this.apiRootPath + this.processParameters(route, parameters);
         };
 
         /**
-         * Get ready promise
-         * @return {*}
+         * Process URL parameters
+         *
+         * @param route relative raw URL such as /myurl/:id/people/:name
+         * @param parameters path parameters key/value object
+         * @return {string} relative url with parameter placeholders replaced by values
          */
-        this.isReady = function () {
-            return this.ready.promise;
-        };
-        /**
-         * Get enums with name in data
-         * @param enumName {String} name to enum
-         * @return {*}
-         */
-        this.getData = function (enumName) {
-            return this.data[enumName];
-        };
-
-        /**
-         * Get enums with name in data
-         * @param enumName {String} name to enum
-         * @return {*}
-         */
-        this.getDataByValue = function (enumName, valueSearch) {
-            var data = this.getData(enumName);
-            return _.findWhere(data, { value: valueSearch });
-        };
-    }
-})();
-(function () {
-    'use strict';
-
-    angular.module('springbok.core').filter('statusKey', statusKey);
-
-    function statusKey() {
-        return function (status) {
-            if (_.isNull && _.isUndefined && status === true) {
-                return 'GLOBAL_ACTIVATED';
-            } else {
-                return 'GLOBAL_DEACTIVATED';
-            }
+        this.processParameters = function (route, parameters) {
+            return urlUtils.processUrlWithPathVariables(route, parameters, ':');
         };
     }
 })();
@@ -669,6 +678,21 @@
             session.account.expiration = null;
             session.account.authenticated = false;
         }
+    }
+})();
+(function () {
+    'use strict';
+
+    angular.module('springbok.core').filter('statusKey', statusKey);
+
+    function statusKey() {
+        return function (status) {
+            if (_.isNull && _.isUndefined && status === true) {
+                return 'GLOBAL_ACTIVATED';
+            } else {
+                return 'GLOBAL_DEACTIVATED';
+            }
+        };
     }
 })();
 (function () {

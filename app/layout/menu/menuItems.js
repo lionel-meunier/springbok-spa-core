@@ -14,7 +14,7 @@
         
         menuItems.isEmpty = function() {
             return _.isEmpty(menuItems.all);
-        }
+        };
         
         menuItems.clear = function() {
             menuItems.all = [];
