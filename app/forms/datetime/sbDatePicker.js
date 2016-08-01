@@ -2,12 +2,12 @@
     'use strict';
     
     var TEMPLATE = '<p class="input-group"> ' +
-                        '<input type="text" class="form-control" sb-date-picker-validation ' +
+                        '<input type="text" class="form-control" ' +
                             'ng-model="$ctrl.dateModel" ' +
                             'ng-required="{{$ctrl.dateRequired}}" ' + 
                             'name="{{$ctrl.dateFormName}}" ' +
                             'placeholder="jj/mm/aaaa" ' +
-                            'uib-datepicker-popup="{{$ctrl.dateFormat}}" ' + 
+                            'uib-datepicker-popup="dd/MM/yyyy" ' + 
                             'is-open="$ctrl.isOpen" ' +
                             'on-open-focus="true" ' +
                             'current-text="{{\'GLOBAL_TODAY\' | translate}}" ' +
@@ -33,7 +33,6 @@
         template: TEMPLATE,
         controller: sdDatePickerController,
         bindings : {
-            dateFormat: '<',
             dateRequired: '<',
             dateModel: '=',
             dateFormName: '<'
