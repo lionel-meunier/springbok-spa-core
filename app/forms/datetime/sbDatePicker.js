@@ -2,7 +2,7 @@
     'use strict';
     
     var TEMPLATE = '<p class="input-group"> ' +
-                        '<input type="text" class="form-control" ' +
+                        '<input type="text" class="form-control" sb-date-picker-validation ' +
                             'ng-model="$ctrl.dateModel" ' +
                             'ng-required="{{$ctrl.dateRequired}}" ' + 
                             'name="{{$ctrl.dateFormName}}" ' +
