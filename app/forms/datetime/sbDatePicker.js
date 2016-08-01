@@ -5,7 +5,7 @@
                         '<input type="text" class="form-control" ' +
                             'ng-model="$ctrl.dateModel" ' +
                             'ng-required="{{$ctrl.dateRequired}}" ' + 
-                            'name="{{$ctrl.dateFormName}}" ' +
+                            'name="{{$ctrl.dateFormFieldName}}" ' +
                             'placeholder="jj/mm/aaaa" ' +
                             'uib-datepicker-popup="dd/MM/yyyy" ' + 
                             'is-open="$ctrl.isOpen" ' +
@@ -19,7 +19,10 @@
                                 '<i class="ace-icon fa fa-calendar-o"></i> ' +
                             '</button> ' +
                         '</span> ' +
-                    '</p>';
+                    '</p>' + 
+                    '<div ng-messages="$ctrl.dateFormName[$ctrl.dateFormFieldName].$error"> ' +
+                        '<span ng-message="date" class="form-error-red">{{\'FORM_DATEFORMAT_INVALID\' | translate}}</span> ' +
+                    '</div>';
     
     function sdDatePickerController() {
         this.isOpen = false;
@@ -35,7 +38,8 @@
         bindings : {
             dateRequired: '<',
             dateModel: '=',
-            dateFormName: '<'
+            dateFormName: '=',
+            dateFormFieldName: '<'
         }
     });
 })();
