@@ -9,7 +9,8 @@
         var notification = this;
         var DEFAULTS = {
             delay: 5000,
-            type: 'info'
+            type: 'info',
+            raw: false
         };
         
         /**
@@ -42,15 +43,18 @@
          * Creates a notification from a message key and a type, info type by default.
          * @param {string} type the type of alert (info|success|warning|error)
          * @param {string} message the message key 
+         * @param {boolean} false if the message is a key that needs to be translated, true otherwise
          * @returns a notification object {type: 'info', message: 'MY_KEY', show: true}
          */
-        notification.create = function(type, message) {
+        notification.create = function(type, message, raw) {
             type = type || DEFAULTS.type;
+            raw = raw || DEFAULTS.raw;
             
             return {
                 show: false,
                 type: type,
-                message: message
+                message: message,
+                raw: raw 
             };
         };
     }

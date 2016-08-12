@@ -5,7 +5,8 @@
     
     var TEMPLATE = '<div ng-show="show" class="alert fixed-notification {{typeClass}}" style="z-index: 2000; position: fixed; width: 25%; top: 5%; right: 0.5%;">' +
                         '<p style="float: left; width: 95%;">' +
-                        '{{message | translate}}' +
+                        '   <span ng-if="raw">message</span>' +
+                        '   <span ng-if="!raw">{{message | translate}}</span>' +
                         '</p>' +
                         '<button type="button" class="close" ng-click="close()" width: 5%;>' +
                             '<i class="fa fa-times"></i>' +
@@ -20,6 +21,7 @@
             replace: true,
             scope: {
                 type: '@',
+                raw: '=',
                 message: '=',
                 show: '='
             },

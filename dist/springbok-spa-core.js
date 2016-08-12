@@ -899,7 +899,8 @@
         var notification = this;
         var DEFAULTS = {
             delay: 5000,
-            type: 'info'
+            type: 'info',
+            raw: false
         };
 
         /**
@@ -932,15 +933,18 @@
          * Creates a notification from a message key and a type, info type by default.
          * @param {string} type the type of alert (info|success|warning|error)
          * @param {string} message the message key 
+         * @param {boolean} false if the message is a key that needs to be translated, true otherwise
          * @returns a notification object {type: 'info', message: 'MY_KEY', show: true}
          */
-        notification.create = function (type, message) {
+        notification.create = function (type, message, raw) {
             type = type || DEFAULTS.type;
+            raw = raw || DEFAULTS.raw;
 
             return {
                 show: false,
                 type: type,
-                message: message
+                message: message,
+                raw: raw
             };
         };
     }
@@ -950,7 +954,7 @@
 
     angular.module('springbok.core').directive('sbNotification', sbNotification);
 
-    var TEMPLATE = '<div ng-show="show" class="alert fixed-notification {{typeClass}}" style="z-index: 2000; position: fixed; width: 25%; top: 5%; right: 0.5%;">' + '<p style="float: left; width: 95%;">' + '{{message | translate}}' + '</p>' + '<button type="button" class="close" ng-click="close()" width: 5%;>' + '<i class="fa fa-times"></i>' + '</button>' + '</div>';
+    var TEMPLATE = '<div ng-show="show" class="alert fixed-notification {{typeClass}}" style="z-index: 2000; position: fixed; width: 25%; top: 5%; right: 0.5%;">' + '<p style="float: left; width: 95%;">' + '   <span ng-if="raw">message</span>' + '   <span ng-if="!raw">{{message | translate}}</span>' + '</p>' + '<button type="button" class="close" ng-click="close()" width: 5%;>' + '<i class="fa fa-times"></i>' + '</button>' + '</div>';
 
     function sbNotification() {
         return {
@@ -960,6 +964,7 @@
             replace: true,
             scope: {
                 type: '@',
+                raw: '=',
                 message: '=',
                 show: '='
             },
