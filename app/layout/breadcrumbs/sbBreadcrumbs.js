@@ -14,14 +14,14 @@
                     '</ul>';
     
     function sbBreadcrumbsController() {
-        this.breadrumbs = this.breadcrumbs ? this.breadcrumbs : [];
+        this.breadcrumbs = this.breadcrumbs ? this.breadcrumbs : [];
     }
     
-    angular.module('springbok.core').directive('sbBreadcrumbs', {
+    angular.module('springbok.core').component('sbBreadcrumbs', {
         template: TEMPLATE,
         controller: sbBreadcrumbsController,
         bindings : {
-            breadcrumbs: '<'
+            breadcrumbs: '='
         }
     });
 })();
