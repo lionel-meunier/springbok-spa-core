@@ -1,7 +1,6 @@
 (function () {
     'use strict';
-    
-    
+
     angular.module('springbok.core').factory('httpInterceptor', httpInterceptor);
     
     httpInterceptor.$inject = ['$rootScope', '$q', '$location', 'session'];
