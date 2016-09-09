@@ -454,6 +454,9 @@
         var self = this;
         this.parse = function () {
             return this.bindingResult.filter(function (br) {
+                if (br.code == 'NotBlank' || br.code == 'NotNull' || br.code == 'NotEmpty') {
+                    return false;
+                }
                 return br.field == self.field;
             }).map(function (br) {
                 return br.defaultMessage ? br.defaultMessage : br.code;
