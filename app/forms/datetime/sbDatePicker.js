@@ -3,8 +3,9 @@
     
     var TEMPLATE = '<p class="input-group"> ' +
                         '<input type="text" class="form-control" ' +
+                            'ng-disabled="$ctrl.controlsDisabled" ' +
                             'ng-model="$ctrl.dateModel" ' +
-                            'ng-required="{{$ctrl.dateRequired}}" ' + 
+                            'ng-required="$ctrl.dateRequired" ' + 
                             'name="{{$ctrl.dateFormFieldName}}" ' +
                             'placeholder="jj/mm/aaaa" ' +
                             'uib-datepicker-popup="dd/MM/yyyy" ' + 
@@ -15,7 +16,7 @@
                             'close-text="{{\'GLOBAL_CLOSE\' | translate}}" /> ' +
                         '<span class="input-group-btn"> ' +
                             '<button type="button" class="btn" style="padding: 2px" ' + 
-                                    'ng-click="$ctrl.open()"> ' +
+                                    'ng-click="$ctrl.open()" ng-disabled="$ctrl.controlsDisabled"> ' +
                                 '<i class="ace-icon fa fa-calendar-o"></i> ' +
                             '</button> ' +
                         '</span> ' +
@@ -26,6 +27,8 @@
     
     function sdDatePickerController() {
         this.isOpen = false;
+        this.controlsDisabled = false;
+        this.dateRequired = false;
         
         this.open = function() {
             this.isOpen = true;  
@@ -36,6 +39,7 @@
         template: TEMPLATE,
         controller: sdDatePickerController,
         bindings : {
+            controlsDisabled: '<',
             dateRequired: '<',
             dateModel: '=',
             dateFormName: '=',
