@@ -40,7 +40,11 @@
          * @param search
          */
         this.get = function(search) {
-            return searchCriterias[search];
+            if (this.has(search)) {
+                return searchCriterias[search];
+            } else {
+                return {};
+            }
         };
         
         /**
@@ -49,7 +53,7 @@
          */
         this.remove = function(search) {
             if (searchCriterias[search] !== undefined) {
-                searchCriterias[search] = undefined;
+                delete searchCriterias[search];
             }
         };
         

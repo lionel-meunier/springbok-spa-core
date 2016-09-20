@@ -16,7 +16,6 @@
 
             this.createColumns();
             this.initMaxPerPage();
-            this.getCriterias();
 
             this.searched = false;
 
@@ -174,8 +173,10 @@
             
         Search.prototype.getCriterias = function() {
             if (searchCriterias.has(this.configuration.criteriasKey)) {
-                this.configuration.form = searchCriterias.get(this.configuration.criteriasKey);
-            } 
+                return searchCriterias.get(this.configuration.criteriasKey);
+            } else {
+                return {};
+            }
         };
             
         return Search;

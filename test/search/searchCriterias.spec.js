@@ -12,8 +12,8 @@
             searchCriterias.clear();
         }));
 
-        it('should return undefined if there is no criteria for a specific search', function () {
-            expect(searchCriterias.get(SEARCH_NAME)).toBeUndefined();
+        it('should return {} if there is no criteria for a specific search', function () {
+            expect(searchCriterias.get(SEARCH_NAME)).toEqual({});
         });
 
         it('should add all criterias for this research, if this research doesn\'t exist', function () {
@@ -34,26 +34,26 @@
         it('should not add criterias if search is undefined', function () {
             var criterias = {user: 'test'};
             searchCriterias.set(undefined, criterias);
-            expect(searchCriterias.get()).toEqual(undefined);
+            expect(searchCriterias.get()).toEqual({});
         });
 
         it('should not add criterias if criterias are undefined', function () {
             searchCriterias.set(SEARCH_NAME, undefined);
-            expect(searchCriterias.get()).toEqual(undefined);
+            expect(searchCriterias.get(SEARCH_NAME)).toEqual({});
         });
 
         it('should reset all criterias', function () {
             var criterias = {user: 'test'};
             searchCriterias.set(SEARCH_NAME, criterias);
             searchCriterias.clear();
-            expect(searchCriterias.get(SEARCH_NAME)).toBeUndefined();
+            expect(searchCriterias.get(SEARCH_NAME)).toEqual({});
         });
 
         it('should remove all criterias for a specific search', function () {
             var criterias = {user: 'test'};
             searchCriterias.set(SEARCH_NAME, criterias);
             searchCriterias.remove(SEARCH_NAME);
-            expect(searchCriterias.get(SEARCH_NAME)).toBeUndefined();
+            expect(searchCriterias.get(SEARCH_NAME)).toEqual({});
         });
 
     });
