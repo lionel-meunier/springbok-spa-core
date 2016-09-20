@@ -171,14 +171,6 @@
             });
         };
             
-        Search.prototype.getCriterias = function() {
-            if (searchCriterias.has(this.configuration.criteriasKey)) {
-                return searchCriterias.get(this.configuration.criteriasKey);
-            } else {
-                return {};
-            }
-        };
-            
         return Search;
     }
 })();
