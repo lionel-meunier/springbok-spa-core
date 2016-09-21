@@ -6,7 +6,7 @@
         template: '<div ng-if="$ctrl.bindingResult && $ctrl.parse().length!=0"' +
         'class=" alert alert-danger" ' +
         'ng-class="$ctrl.field ? \'form-error-red\' : \'help-inline\'">' +
-        '<i ng-if="!$ctrl.field" class="ace-icon fa fa-exclamation-triangle fa-lg"></i> ' +
+        '<i ng-if="!$ctrl.field" class="ace-icon fa fa-warning"></i> ' +
         '<span ng-repeat="message in $ctrl.parse() track by $index">{{message}}</span>' +
         '</div>',
         bindings: {
