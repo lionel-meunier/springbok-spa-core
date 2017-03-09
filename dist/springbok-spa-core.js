@@ -137,6 +137,69 @@
 (function () {
     'use strict';
 
+    angular.module('springbok.core').service('pagination', pagination);
+
+    function pagination() {
+        var pagination = this;
+
+        pagination.defaultAllMaxPerPage = [50, 100, 200, 1000, 2000];
+
+        pagination.setDefaultAllMaxPerPage = function (defaultAllMaxPerPage) {
+            pagination.defaultAllMaxPerPage = defaultAllMaxPerPage;
+        };
+
+        pagination.extendsPagedDataWithWalker = function (pagedData) {
+            if (pagedData.number === 0) {
+                pagedData.currentPageFrom = 1;
+                pagedData.currentPageTo = pagedData.numberOfElements < pagedData.size ? pagedData.numberOfElements : pagedData.size;
+            } else {
+                pagedData.currentPageFrom = pagedData.number * pagedData.size + 1;
+                pagedData.currentPageTo = pagedData.numberOfElements < pagedData.size ? pagedData.totalElements : pagedData.currentPageFrom - 1 + pagedData.size;
+            }
+        };
+    }
+})();
+(function () {
+    'use strict';
+
+    angular.module('springbok.core').directive('sbSearchFooter', sbSearchFooter);
+
+    var TEMPLATE = '<div class="row"' + 'ng-show="search.results.totalElements > 0">' + '<div class="col-sm-6">' + '<div class="dataTables_info">' + '{{\'SEARCH_RESULTS_CAPITALIZED\'| translate}} {{search.results.currentPageFrom}} {{\'SEARCH_TO\'| translate}} ' + '{{search.results.currentPageTo}} {{\'SEARCH_OF\'| translate}} {{search.results.totalElements}}' + '</div>' + '</div>' + '<div class="col-sm-6">' + '<uib-pagination ' + 'boundary-links="true" ' + 'items-per-page="search.configuration.maxPerPage" ' + 'total-items="search.results.totalElements" ' + 'ng-model="search.results.currentPage" ' + 'ng-change="search.search()" ' + 'class="pull-right pagination-sm" ' + 'previous-text="&lsaquo;" ' + 'next-text="&rsaquo;" ' + 'first-text="&laquo;" ' + 'last-text="&raquo;">' + '</uib-pagination>' + '</div>' + '</div>;';
+
+    function sbSearchFooter() {
+        return {
+            restrict: 'E',
+            template: TEMPLATE,
+            transclude: true,
+            replace: true,
+            scope: {
+                search: '='
+            }
+        };
+    }
+})();
+(function () {
+    'use strict';
+
+    angular.module('springbok.core').directive('sbSearchHeader', sbSearchHeader);
+
+    var TEMPLATE = '<div class="table-header" style="margin-top: 1%"' + 'ng-show="search.searched">' + '{{search.results.totalElements}} {{\'SEARCH_RESULTS_LOWERCASE\' | translate}}' + '<div class="pull-right table-header-tools form-inline">' + '<label for="maxPerPage">{{\'SEARCH_MAXPERPAGE\' | translate}}</label>' + '<select id="maxPerPage"' + 'class="input-small"' + 'style="margin: 0 10px"' + 'ng-model="search.configuration.maxPerPage"' + 'ng-options="maxPerPage for maxPerPage in search.configuration.allMaxPerPage"' + 'ng-change="search.search()">' + '</select>' + '</div>' + '</div>';
+
+    function sbSearchHeader() {
+        return {
+            restrict: 'E',
+            template: TEMPLATE,
+            transclude: true,
+            replace: true,
+            scope: {
+                search: '='
+            }
+        };
+    }
+})();
+(function () {
+    'use strict';
+
     angular.module('springbok.core').factory('Search', Search);
 
     Search.$inject = ['$log', '$q', '$http', 'pagination', 'searchCriterias'];
@@ -303,69 +366,6 @@
         };
 
         return Search;
-    }
-})();
-(function () {
-    'use strict';
-
-    angular.module('springbok.core').service('pagination', pagination);
-
-    function pagination() {
-        var pagination = this;
-
-        pagination.defaultAllMaxPerPage = [50, 100, 200, 1000, 2000];
-
-        pagination.setDefaultAllMaxPerPage = function (defaultAllMaxPerPage) {
-            pagination.defaultAllMaxPerPage = defaultAllMaxPerPage;
-        };
-
-        pagination.extendsPagedDataWithWalker = function (pagedData) {
-            if (pagedData.number === 0) {
-                pagedData.currentPageFrom = 1;
-                pagedData.currentPageTo = pagedData.numberOfElements < pagedData.size ? pagedData.numberOfElements : pagedData.size;
-            } else {
-                pagedData.currentPageFrom = pagedData.number * pagedData.size + 1;
-                pagedData.currentPageTo = pagedData.numberOfElements < pagedData.size ? pagedData.totalElements : pagedData.currentPageFrom - 1 + pagedData.size;
-            }
-        };
-    }
-})();
-(function () {
-    'use strict';
-
-    angular.module('springbok.core').directive('sbSearchFooter', sbSearchFooter);
-
-    var TEMPLATE = '<div class="row"' + 'ng-show="search.results.totalElements > 0">' + '<div class="col-sm-6">' + '<div class="dataTables_info">' + '{{\'SEARCH_RESULTS_CAPITALIZED\'| translate}} {{search.results.currentPageFrom}} {{\'SEARCH_TO\'| translate}} ' + '{{search.results.currentPageTo}} {{\'SEARCH_OF\'| translate}} {{search.results.totalElements}}' + '</div>' + '</div>' + '<div class="col-sm-6">' + '<uib-pagination ' + 'boundary-links="true" ' + 'items-per-page="search.configuration.maxPerPage" ' + 'total-items="search.results.totalElements" ' + 'ng-model="search.results.currentPage" ' + 'ng-change="search.search()" ' + 'class="pull-right pagination-sm" ' + 'previous-text="&lsaquo;" ' + 'next-text="&rsaquo;" ' + 'first-text="&laquo;" ' + 'last-text="&raquo;">' + '</uib-pagination>' + '</div>' + '</div>;';
-
-    function sbSearchFooter() {
-        return {
-            restrict: 'E',
-            template: TEMPLATE,
-            transclude: true,
-            replace: true,
-            scope: {
-                search: '='
-            }
-        };
-    }
-})();
-(function () {
-    'use strict';
-
-    angular.module('springbok.core').directive('sbSearchHeader', sbSearchHeader);
-
-    var TEMPLATE = '<div class="table-header" style="margin-top: 1%"' + 'ng-show="search.searched">' + '{{search.results.totalElements}} {{\'SEARCH_RESULTS_LOWERCASE\' | translate}}' + '<div class="pull-right table-header-tools form-inline">' + '<label for="maxPerPage">{{\'SEARCH_MAXPERPAGE\' | translate}}</label>' + '<select id="maxPerPage"' + 'class="input-small"' + 'style="margin: 0 10px"' + 'ng-model="search.configuration.maxPerPage"' + 'ng-options="maxPerPage for maxPerPage in search.configuration.allMaxPerPage"' + 'ng-change="search.search()">' + '</select>' + '</div>' + '</div>';
-
-    function sbSearchHeader() {
-        return {
-            restrict: 'E',
-            template: TEMPLATE,
-            transclude: true,
-            replace: true,
-            scope: {
-                search: '='
-            }
-        };
     }
 })();
 (function () {
@@ -564,88 +564,6 @@
 (function () {
     'use strict';
 
-    angular.module('springbok.core').controller('i18nController', i18nController);
-
-    i18nController.$inject = ['$translate', 'languages', 'session'];
-
-    function i18nController($translate, languages, session) {
-        var i18n = this;
-
-        i18n.languages = languages.list;
-
-        i18n.change = function (languageKey) {
-            if (languages.has(languageKey)) {
-                $translate.use(languageKey);
-                session.setLanguage(languageKey);
-            }
-        };
-
-        i18n.get = function (languageKey) {
-            return languages.get(languageKey);
-        };
-
-        i18n.change(session.language);
-    }
-})();
-(function () {
-    'use strict';
-
-    angular.module('springbok.core').service('languages', languages);
-
-    function languages() {
-        var languages = this;
-
-        languages.list = [{ key: 'fr_FR', i18nKey: 'I18N_FRENCH' }];
-
-        languages.add = function (languageKey, languageI18nKey) {
-            languages.list.push({ key: languageKey, i18nKey: languageI18nKey });
-        };
-
-        languages.get = function (languageKey) {
-            return _.findWhere(languages.list, { key: languageKey });
-        };
-
-        languages.has = function (languageKey) {
-            return !_.isUndefined(languages.get(languageKey));
-        };
-
-        languages.clear = function () {
-            languages.list = [];
-        };
-    }
-})();
-(function () {
-    'use strict';
-
-    angular.module('springbok.core').directive('sbLanguagePicker', sbLanguagePicker);
-
-    var TEMPLATE = '<li id="sb-language-picker" class="green" ' + 'ng-controller="i18nController as i18n"> ' + '<a data-toggle="dropdown" class="dropdown-toggle pointer" aria-expanded="false"> ' + '<span class="user-info"> ' + '<small>{{ \'I18N_LANGUAGE\' | translate}}</small> ' + '{{i18n.get(authentication.session.language).i18nKey | translate}} ' + '</span> ' + '<i class="ace-icon fa fa-caret-down"></i> ' + '</a> ' + '<ul class="user-menu dropdown-menu-right dropdown-menu dropdown-yellow dropdown-caret dropdown-close"> ' + '<li ng-repeat="language in i18n.languages"> ' + '<a class="pointer" ng-click="i18n.change(language.key)"> ' + '<img width="15" ng-src="assets/images/i18n/{{language.key}}.png" alt="{{language.i18nKey | translate}} flag"/> ' + '{{language.i18nKey | translate }} ' + '</a> ' + '</li> ' + '</ul> ' + '</li>';
-
-    function sbLanguagePicker() {
-        return {
-            restrict: 'E',
-            template: TEMPLATE,
-            transclude: true,
-            replace: true
-        };
-    }
-})();
-(function () {
-    'use strict';
-
-    angular.module('springbok.core').config(Translation);
-
-    Translation.$inject = ['$translateProvider'];
-
-    function Translation($translateProvider) {
-        $translateProvider.preferredLanguage(CONFIG.app.preferredLanguage);
-        $translateProvider.useMissingTranslationHandlerLog();
-        $translateProvider.useSanitizeValueStrategy(null);
-    }
-})();
-(function () {
-    'use strict';
-
     angular.module('springbok.core').factory('httpInterceptor', httpInterceptor);
 
     httpInterceptor.$inject = ['$rootScope', '$q', '$location', 'session'];
@@ -815,6 +733,88 @@
 (function () {
     'use strict';
 
+    angular.module('springbok.core').controller('i18nController', i18nController);
+
+    i18nController.$inject = ['$translate', 'languages', 'session'];
+
+    function i18nController($translate, languages, session) {
+        var i18n = this;
+
+        i18n.languages = languages.list;
+
+        i18n.change = function (languageKey) {
+            if (languages.has(languageKey)) {
+                $translate.use(languageKey);
+                session.setLanguage(languageKey);
+            }
+        };
+
+        i18n.get = function (languageKey) {
+            return languages.get(languageKey);
+        };
+
+        i18n.change(session.language);
+    }
+})();
+(function () {
+    'use strict';
+
+    angular.module('springbok.core').service('languages', languages);
+
+    function languages() {
+        var languages = this;
+
+        languages.list = [{ key: 'fr_FR', i18nKey: 'I18N_FRENCH' }];
+
+        languages.add = function (languageKey, languageI18nKey) {
+            languages.list.push({ key: languageKey, i18nKey: languageI18nKey });
+        };
+
+        languages.get = function (languageKey) {
+            return _.findWhere(languages.list, { key: languageKey });
+        };
+
+        languages.has = function (languageKey) {
+            return !_.isUndefined(languages.get(languageKey));
+        };
+
+        languages.clear = function () {
+            languages.list = [];
+        };
+    }
+})();
+(function () {
+    'use strict';
+
+    angular.module('springbok.core').directive('sbLanguagePicker', sbLanguagePicker);
+
+    var TEMPLATE = '<li id="sb-language-picker" class="green" ' + 'ng-controller="i18nController as i18n"> ' + '<a data-toggle="dropdown" class="dropdown-toggle pointer" aria-expanded="false"> ' + '<span class="user-info"> ' + '<small>{{ \'I18N_LANGUAGE\' | translate}}</small> ' + '{{i18n.get(authentication.session.language).i18nKey | translate}} ' + '</span> ' + '<i class="ace-icon fa fa-caret-down"></i> ' + '</a> ' + '<ul class="user-menu dropdown-menu-right dropdown-menu dropdown-yellow dropdown-caret dropdown-close"> ' + '<li ng-repeat="language in i18n.languages"> ' + '<a class="pointer" ng-click="i18n.change(language.key)"> ' + '<img width="15" ng-src="assets/images/i18n/{{language.key}}.png" alt="{{language.i18nKey | translate}} flag"/> ' + '{{language.i18nKey | translate }} ' + '</a> ' + '</li> ' + '</ul> ' + '</li>';
+
+    function sbLanguagePicker() {
+        return {
+            restrict: 'E',
+            template: TEMPLATE,
+            transclude: true,
+            replace: true
+        };
+    }
+})();
+(function () {
+    'use strict';
+
+    angular.module('springbok.core').config(Translation);
+
+    Translation.$inject = ['$translateProvider'];
+
+    function Translation($translateProvider) {
+        $translateProvider.preferredLanguage(CONFIG.app.preferredLanguage);
+        $translateProvider.useMissingTranslationHandlerLog();
+        $translateProvider.useSanitizeValueStrategy(null);
+    }
+})();
+(function () {
+    'use strict';
+
     angular.module('springbok.core').config(Logging);
 
     Logging.$inject = ['$logProvider'];
@@ -822,6 +822,36 @@
     function Logging($logProvider) {
         $logProvider.debugEnabled(CONFIG.app.logDebugEnabled);
     }
+})();
+(function () {
+    'use strict';
+
+    var TEMPLATE = '<p class="input-group"> ' + '<input type="text" class="form-control" ' + 'ng-class="$ctrl.controlsClass"' + 'ng-disabled="$ctrl.controlsDisabled" ' + 'ng-model="$ctrl.dateModel" ' + 'ng-required="$ctrl.dateRequired" ' + 'name="{{$ctrl.dateFormFieldName}}" ' + 'placeholder="jj/mm/aaaa" ' + 'uib-datepicker-popup="dd/MM/yyyy" ' + 'popup-placement="{{$ctrl.popupPlacement}}" ' + 'is-open="$ctrl.isOpen" ' + 'on-open-focus="true" ' + 'current-text="{{\'GLOBAL_TODAY\' | translate}}" ' + 'clear-text="{{\'GLOBAL_RESET\' | translate}}" ' + 'close-text="{{\'GLOBAL_CLOSE\' | translate}}" /> ' + '<span class="input-group-btn"> ' + '<button type="button" class="btn" style="padding: 2px" ' + 'ng-click="$ctrl.open()" ng-disabled="$ctrl.controlsDisabled"> ' + '<i class="ace-icon fa fa-calendar-o"></i> ' + '</button> ' + '</span> ' + '</p>' + '<div ng-messages="$ctrl.dateFormName[$ctrl.dateFormFieldName].$error"> ' + '<span ng-message="date" class="form-error-red">{{\'FORM_DATEFORMAT_INVALID\' | translate}}</span> ' + '</div>';
+
+    function sdDatePickerController() {
+        this.isOpen = false;
+        this.controlsDisabled = false;
+        this.dateRequired = false;
+        this.popupPlacement = 'auto bottom-left';
+
+        this.open = function () {
+            this.isOpen = true;
+        };
+    }
+
+    angular.module('springbok.core').component('sbDatePicker', {
+        template: TEMPLATE,
+        controller: sdDatePickerController,
+        bindings: {
+            controlsDisabled: '<',
+            controlsClass: '@',
+            dateRequired: '<',
+            dateModel: '=',
+            dateFormName: '=',
+            dateFormFieldName: '<',
+            popupPlacement: '@'
+        }
+    });
 })();
 (function () {
     'use strict';
@@ -1047,32 +1077,4 @@
             }
         };
     }
-})();
-(function () {
-    'use strict';
-
-    var TEMPLATE = '<p class="input-group"> ' + '<input type="text" class="form-control" ' + 'ng-class="$ctrl.controlsClass"' + 'ng-disabled="$ctrl.controlsDisabled" ' + 'ng-model="$ctrl.dateModel" ' + 'ng-required="$ctrl.dateRequired" ' + 'name="{{$ctrl.dateFormFieldName}}" ' + 'placeholder="jj/mm/aaaa" ' + 'uib-datepicker-popup="dd/MM/yyyy" ' + 'is-open="$ctrl.isOpen" ' + 'on-open-focus="true" ' + 'current-text="{{\'GLOBAL_TODAY\' | translate}}" ' + 'clear-text="{{\'GLOBAL_RESET\' | translate}}" ' + 'close-text="{{\'GLOBAL_CLOSE\' | translate}}" /> ' + '<span class="input-group-btn"> ' + '<button type="button" class="btn" style="padding: 2px" ' + 'ng-click="$ctrl.open()" ng-disabled="$ctrl.controlsDisabled"> ' + '<i class="ace-icon fa fa-calendar-o"></i> ' + '</button> ' + '</span> ' + '</p>' + '<div ng-messages="$ctrl.dateFormName[$ctrl.dateFormFieldName].$error"> ' + '<span ng-message="date" class="form-error-red">{{\'FORM_DATEFORMAT_INVALID\' | translate}}</span> ' + '</div>';
-
-    function sdDatePickerController() {
-        this.isOpen = false;
-        this.controlsDisabled = false;
-        this.dateRequired = false;
-
-        this.open = function () {
-            this.isOpen = true;
-        };
-    }
-
-    angular.module('springbok.core').component('sbDatePicker', {
-        template: TEMPLATE,
-        controller: sdDatePickerController,
-        bindings: {
-            controlsDisabled: '<',
-            controlsClass: '@',
-            dateRequired: '<',
-            dateModel: '=',
-            dateFormName: '=',
-            dateFormFieldName: '<'
-        }
-    });
 })();

@@ -10,6 +10,7 @@
                             'name="{{$ctrl.dateFormFieldName}}" ' +
                             'placeholder="jj/mm/aaaa" ' +
                             'uib-datepicker-popup="dd/MM/yyyy" ' +
+                            'popup-placement="{{$ctrl.popupPlacement}}" ' +
                             'is-open="$ctrl.isOpen" ' +
                             'on-open-focus="true" ' +
                             'current-text="{{\'GLOBAL_TODAY\' | translate}}" ' +
@@ -30,6 +31,7 @@
         this.isOpen = false;
         this.controlsDisabled = false;
         this.dateRequired = false;
+        this.popupPlacement = 'auto bottom-left';
 
         this.open = function() {
             this.isOpen = true;
@@ -45,7 +47,8 @@
             dateRequired: '<',
             dateModel: '=',
             dateFormName: '=',
-            dateFormFieldName: '<'
+            dateFormFieldName: '<',
+            popupPlacement: '@'
         }
     });
 })();
