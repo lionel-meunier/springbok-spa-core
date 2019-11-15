@@ -1,4 +1,5 @@
 {
+  "name": "springbok-spa-core",
   "jspm": {
     "dependencies": {
       "angular": "github:angular/bower-angular@1.5.0",
