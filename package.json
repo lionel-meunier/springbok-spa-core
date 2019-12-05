@@ -1,5 +1,5 @@
 {
-  "name": "springbok-spa-core",
+  "name": "@io/springbok-spa-core",
   "version": "0.0.1",
   "jspm": {
     "dependencies": {
